@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createChart, ColorType, LineSeries, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { Calendar, TrendingUp, AlertCircle, Info, Layers, Eye, Sparkles } from 'lucide-react';
+import { Calendar, TrendingUp, AlertCircle, Info, Layers, Eye, Sparkles, Flame, Vault, Cpu } from 'lucide-react';
 
-export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
+export default function ForecastChart({ marketHistory = [], forecasts = {}, indicatorsForecast = {} }) {
   const chartContainerRef = useRef(null);
   const chartInstance = useRef(null);
 
@@ -10,14 +10,12 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
   const [selectedHorizon, setSelectedHorizon] = useState('30d');
   const [chartType, setChartType] = useState('candles'); // 'candles' | 'line'
   const [showP10P90, setShowP10P90] = useState(true);
-  const [showP25P75, setShowP25P75] = useState(true);
 
   const currentForecast = forecasts[selectedHorizon] || null;
 
   useEffect(() => {
     if (!chartContainerRef.current || marketHistory.length === 0) return;
 
-    // Remove gráfico anterior se houver
     if (chartInstance.current) {
       chartInstance.current.remove();
       chartInstance.current = null;
@@ -38,7 +36,7 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
         horzLines: { color: 'rgba(51, 65, 85, 0.25)' },
       },
       crosshair: {
-        mode: 1, // Magnet
+        mode: 1,
         vertLine: {
           color: 'rgba(168, 85, 247, 0.6)',
           width: 1,
@@ -95,18 +93,18 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
       historyLineSeries.setData(lineData);
     }
 
-    // 2. Se houver projeção selecionada, plotar as bandas e a mediana
+    // 2. Plotar projeções do TimesFM 3.0
     if (currentForecast && currentForecast.points && currentForecast.points.length > 0) {
       const lastHistorical = marketHistory[marketHistory.length - 1];
 
-      // Banda Ampla P10 - P90 (Área superior e inferior)
+      // Banda Ampla P10 - P90
       if (showP10P90) {
         const areaUpperP90 = chart.addSeries(AreaSeries, {
-          topColor: 'rgba(168, 85, 247, 0.12)',
+          topColor: 'rgba(168, 85, 247, 0.14)',
           bottomColor: 'rgba(168, 85, 247, 0.01)',
-          lineColor: 'rgba(168, 85, 247, 0.4)',
+          lineColor: 'rgba(168, 85, 247, 0.45)',
           lineWidth: 1,
-          lineStyle: 2, // Dashed
+          lineStyle: 2,
         });
         const p90Data = [
           { time: lastHistorical.time, value: lastHistorical.close },
@@ -117,7 +115,7 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
         const areaLowerP10 = chart.addSeries(AreaSeries, {
           topColor: 'rgba(168, 85, 247, 0.05)',
           bottomColor: 'rgba(168, 85, 247, 0.01)',
-          lineColor: 'rgba(168, 85, 247, 0.4)',
+          lineColor: 'rgba(168, 85, 247, 0.45)',
           lineWidth: 1,
           lineStyle: 2,
         });
@@ -128,9 +126,9 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
         areaLowerP10.setData(p10Data);
       }
 
-      // Linha Central do TimesFM (Mediana / P50)
+      // Linha Mediana P50 do TimesFM 3.0
       const medianSeries = chart.addSeries(LineSeries, {
-        color: '#c084fc', // Lilás elétrico
+        color: '#c084fc',
         lineWidth: 3,
         lineStyle: 0,
       });
@@ -159,7 +157,7 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
         chartInstance.current = null;
       }
     };
-  }, [marketHistory, currentForecast, chartType, showP10P90, showP25P75]);
+  }, [marketHistory, currentForecast, chartType, showP10P90]);
 
   return (
     <div className="bg-[#0f1422] border border-slate-800/90 rounded-2xl p-5 shadow-2xl backdrop-blur-sm">
@@ -172,8 +170,11 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
             <h2 className="text-lg font-bold text-white tracking-tight">
-              Previsão de Preço com Google TimesFM
+              Previsão de Preço com Google TimesFM 3.0
             </h2>
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              Melhor Modelo SOTA
+            </span>
           </div>
 
           {/* Horizontes */}
@@ -200,7 +201,6 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
 
         {/* Toggles de Visualização */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          {/* Tipo de Gráfico */}
           <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-1 flex items-center">
             <button
               onClick={() => setChartType('candles')}
@@ -220,7 +220,6 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
             </button>
           </div>
 
-          {/* Toggle Bandas P10-P90 */}
           <button
             onClick={() => setShowP10P90(!showP10P90)}
             className={`px-2.5 py-1.5 rounded-xl border font-medium flex items-center gap-1.5 transition cursor-pointer ${
@@ -236,7 +235,7 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
 
       </div>
 
-      {/* Estatísticas Rápidas do Horizonte */}
+      {/* Estatísticas Rápidas do Preço */}
       {currentForecast && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 py-4 border-b border-slate-800/70">
           <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-800/50">
@@ -290,7 +289,7 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-1 bg-purple-400"></span>
-            <span className="text-purple-300 font-medium">TimesFM P50 (Mediana)</span>
+            <span className="text-purple-300 font-medium">TimesFM 3.0 P50 (Mediana)</span>
           </div>
           {showP10P90 && (
             <div className="flex items-center gap-1.5">
@@ -301,7 +300,7 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
         </div>
       </div>
 
-      {/* Explicação Qualitativa do Horizonte Gerada pelo Modelo */}
+      {/* Explicação Qualitativa do Horizonte */}
       {currentForecast && currentForecast.explanation && (
         <div className="mt-5 p-4 rounded-xl bg-gradient-to-r from-purple-950/30 via-slate-900/50 to-indigo-950/20 border border-purple-500/20">
           <div className="flex items-start gap-3">
@@ -327,6 +326,86 @@ export default function ForecastChart({ marketHistory = [], forecasts = {} }) {
                 {currentForecast.explanation.probability_band}
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Grid de Previsões dos Indicadores On-chain Adicionais (30 Dias) */}
+      {indicatorsForecast && Object.keys(indicatorsForecast).length > 0 && (
+        <div className="mt-6 pt-5 border-t border-slate-800">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-purple-400" />
+              Projeções de Indicadores On-Chain com TimesFM 3.0 (30 Dias)
+            </h3>
+            <span className="text-[11px] text-slate-500">Auto-regressivo multivariado</span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            {/* 1. TVL DeFi */}
+            {indicatorsForecast.tvl_30d && (
+              <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400 flex items-center gap-1.5">
+                    <Vault className="w-3.5 h-3.5 text-cyan-400" />
+                    TVL DeFi Projetado
+                  </span>
+                  <span className="font-bold text-emerald-400">
+                    +{indicatorsForecast.tvl_30d.change_pct}%
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-white mt-1">
+                  ${indicatorsForecast.tvl_30d.projected_median_bn_usd}B
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Faixa P10–P90: ${indicatorsForecast.tvl_30d.p10_p90[0]}B a ${indicatorsForecast.tvl_30d.p10_p90[1]}B
+                </p>
+              </div>
+            )}
+
+            {/* 2. Queima EIP-1559 */}
+            {indicatorsForecast.daily_burn_30d && (
+              <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400 flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-amber-400" />
+                    Queima Estimada (30D)
+                  </span>
+                  <span className="font-bold text-amber-300">
+                    ~{indicatorsForecast.daily_burn_30d.projected_median_eth_day} ETH/dia
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-amber-300 mt-1">
+                  {indicatorsForecast.daily_burn_30d.cumulative_30d_eth?.toLocaleString()} ETH
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Total a ser destruído e retirado de circulação em 30 dias
+                </p>
+              </div>
+            )}
+
+            {/* 3. L2 TPS */}
+            {indicatorsForecast.l2_tps_30d && (
+              <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-400 flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                    TPS Médio de L2s
+                  </span>
+                  <span className="font-bold text-cyan-400">
+                    +{indicatorsForecast.l2_tps_30d.change_pct}%
+                  </span>
+                </div>
+                <p className="text-lg font-bold text-white mt-1">
+                  {indicatorsForecast.l2_tps_30d.projected_median_tps} tx/s
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Faixa P10–P90: {indicatorsForecast.l2_tps_30d.p10_p90[0]} a {indicatorsForecast.l2_tps_30d.p10_p90[1]} tx/s
+                </p>
+              </div>
+            )}
+
           </div>
         </div>
       )}

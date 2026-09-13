@@ -81,10 +81,11 @@ export default function App() {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        {/* Mega Gráfico de Previsões com TimesFM */}
+        {/* Mega Gráfico de Previsões com TimesFM 3.0 */}
         <ForecastChart 
           marketHistory={market_history}
           forecasts={forecasts}
+          indicatorsForecast={data.indicators_forecast}
         />
 
         {/* Seção 1: O Ethereum como Super Asset (Triple Point Asset) */}
