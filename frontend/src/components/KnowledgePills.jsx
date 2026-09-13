@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { Lightbulb, ChevronDown, ChevronUp, Sparkles, BookOpen, Layers } from 'lucide-react';
+import { Lightbulb, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 
-export default function KnowledgePills({ t }) {
-  const [openPillId, setOpenPillId] = useState(t.pills[0]?.id || "triple-point");
+export default function KnowledgePills({ t, lang = 'pt' }) {
+  const tt = t?.thesis || t || {};
+  const pillsList = t?.pills || [];
+  const [openPillId, setOpenPillId] = useState(pillsList[0]?.id || "triple-point");
 
   const togglePill = (id) => {
     setOpenPillId(prev => prev === id ? null : id);
   };
+
+  const badgeText = lang === 'en' ? 'Signal Focus' : lang === 'zh' ? '纯干货' : 'Sem Slop';
+  const countLabel = lang === 'en' ? 'core concepts' : lang === 'zh' ? '个底层核心概念' : 'conceitos fundamentais';
 
   return (
     <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs my-6">
@@ -17,24 +22,24 @@ export default function KnowledgePills({ t }) {
               <Lightbulb className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-lg text-slate-900 tracking-tight">
-              {t.knowledgePillsTitle}
+              {tt.pillsTitle || "Pílulas de Conhecimento • Conceitos Fundamentais"}
             </h3>
             <span className="px-2 py-0.5 text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 rounded-full">
-              Sem Slop
+              {badgeText}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            {t.knowledgePillsSubtitle}
+            {tt.pillsSubtitle || "Conceitos estruturais essenciais explicados de forma direta e sem jargões desnecessários"}
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>{t.pills.length} conceitos fundamentais</span>
+          <span>{pillsList.length} {countLabel}</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {t.pills.map((pill) => {
+        {pillsList.map((pill) => {
           const isOpen = openPillId === pill.id;
           return (
             <div 

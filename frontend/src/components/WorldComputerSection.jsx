@@ -1,9 +1,10 @@
 import React from 'react';
 import { Layers, ShieldCheck, Zap, Network } from 'lucide-react';
 
-export default function WorldComputerSection({ worldComputerMetrics }) {
+export default function WorldComputerSection({ worldComputerMetrics, t, lang = 'pt' }) {
   if (!worldComputerMetrics) return null;
 
+  const tt = t?.thesis || t || {};
   const { l2_ecosystem, total_l2_tps, l1_settlement_volume_daily_usd, uptime, active_developers } = worldComputerMetrics;
 
   return (
@@ -11,16 +12,20 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Arquitetura de Rede</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+              {tt.networkArchBadge || "Arquitetura de Rede"}
+            </span>
             <span className="text-slate-300">•</span>
-            <span className="text-xs font-medium text-slate-500">Global State Machine</span>
+            <span className="text-xs font-medium text-slate-500">
+              {tt.stateMachineBadge || "Global State Machine"}
+            </span>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight mt-1">
-            Ethereum: O Computador Mundial Descentralizado
+            {tt.worldComputerTitle || "Ethereum: O Computador Mundial Descentralizado"}
           </h2>
         </div>
         <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-          Uma máquina de estados global, imutável e descentralizada, garantindo que contratos e aplicações financeiras operem ininterruptamente sem dependência de servidores centralizados ou governos.
+          {tt.worldComputerSubtitle || "Uma máquina de estados global, imutável e descentralizada, garantindo que contratos e aplicações financeiras operem ininterruptamente sem dependência de servidores centralizados ou governos."}
         </p>
       </div>
 
@@ -35,10 +40,12 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Disponibilidade Contínua</h4>
+              <h4 className="text-sm font-bold text-slate-900">
+                {tt.uptimeTitle || "Disponibilidade Contínua"}
+              </h4>
               <p className="text-xs text-emerald-700 font-bold mt-0.5">{uptime}</p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Sem pontos únicos de falha. A rede processa blocos ininterruptamente há quase uma década, validada por centenas de milhares de nós independentes.
+                {tt.uptimeDesc || "Sem pontos únicos de falha. A rede processa blocos ininterruptamente há quase uma década, validada por centenas de milhares de nós independentes."}
               </p>
             </div>
           </div>
@@ -48,10 +55,12 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
               <Zap className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Settlement Layer Suprema</h4>
-              <p className="text-xs text-blue-700 font-bold mt-0.5">{l1_settlement_volume_daily_usd} / dia</p>
+              <h4 className="text-sm font-bold text-slate-900">
+                {tt.settlementTitle || "Settlement Layer Suprema"}
+              </h4>
+              <p className="text-xs text-blue-700 font-bold mt-0.5">{l1_settlement_volume_daily_usd} {tt.settlementPerDay || "/ dia"}</p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                A camada 1 do Ethereum é a câmara de compensação definitiva para valor global, liquidando volumes superiores a redes financeiras tradicionais.
+                {tt.settlementDesc || "A camada 1 do Ethereum é a câmara de compensação definitiva para valor global, liquidando volumes superiores a redes financeiras tradicionais."}
               </p>
             </div>
           </div>
@@ -61,10 +70,12 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
               <Network className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-slate-900">Efeito de Rede de Desenvolvedores</h4>
-              <p className="text-xs text-indigo-700 font-bold mt-0.5">EVM como Padrão Global</p>
+              <h4 className="text-sm font-bold text-slate-900">
+                {tt.devNetworkTitle || "Efeito de Rede de Desenvolvedores"}
+              </h4>
+              <p className="text-xs text-indigo-700 font-bold mt-0.5">{tt.devNetworkSub || "EVM como Padrão Global"}</p>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {active_developers}. Todas as principais inovações financeiras, DeFi, stablecoins e tokens nascem sob a arquitetura EVM.
+                {active_developers}. {tt.devNetworkDesc || "Todas as principais inovações financeiras, DeFi, stablecoins e tokens nascem sob a arquitetura EVM."}
               </p>
             </div>
           </div>
@@ -76,13 +87,15 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-200 gap-2">
               <div>
-                <h3 className="font-bold text-slate-900 text-sm">Escala Modular via Layer 2s (Rollups)</h3>
+                <h3 className="font-bold text-slate-900 text-sm">
+                  {tt.l2ScaleTitle || "Escala Modular via Layer 2s (Rollups)"}
+                </h3>
                 <p className="text-xs text-slate-500">
-                  Execução paralela de alta velocidade com liquidação segura e barata ancorada na Camada 1
+                  {tt.l2ScaleSub || "Execução paralela de alta velocidade com liquidação segura e barata ancorada na Camada 1"}
                 </p>
               </div>
               <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200/80 self-start shadow-2xs">
-                <span className="text-[11px] uppercase text-slate-500 font-semibold">TPS Agregado L2:</span>
+                <span className="text-[11px] uppercase text-slate-500 font-semibold">{tt.l2TpsAggregated || "TPS Agregado L2:"}</span>
                 <span className="text-xs font-bold text-blue-700 font-mono">{total_l2_tps} tx/s</span>
               </div>
             </div>
@@ -92,11 +105,11 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="text-slate-400 border-b border-slate-200 text-[11px] uppercase tracking-wider bg-slate-50/60">
-                    <th className="py-2.5 px-3 font-semibold text-slate-600 rounded-l-lg">Rede L2</th>
-                    <th className="py-2.5 px-2 font-semibold text-slate-600">Tipo</th>
-                    <th className="py-2.5 px-2 font-semibold text-slate-600 text-right">Velocidade (TPS)</th>
-                    <th className="py-2.5 px-2 font-semibold text-slate-600 text-right">TVL em Custódia</th>
-                    <th className="py-2.5 px-3 font-semibold text-slate-600 text-right rounded-r-lg">Liquidação</th>
+                    <th className="py-2.5 px-3 font-semibold text-slate-600 rounded-l-lg">{tt.thNetwork || "Rede L2"}</th>
+                    <th className="py-2.5 px-2 font-semibold text-slate-600">{tt.thType || "Tipo"}</th>
+                    <th className="py-2.5 px-2 font-semibold text-slate-600 text-right">{tt.thSpeed || "Velocidade (TPS)"}</th>
+                    <th className="py-2.5 px-2 font-semibold text-slate-600 text-right">{tt.thTvl || "TVL em Custódia"}</th>
+                    <th className="py-2.5 px-3 font-semibold text-slate-600 text-right rounded-r-lg">{tt.thSettlement || "Liquidação"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -120,10 +133,10 @@ export default function WorldComputerSection({ worldComputerMetrics }) {
           <div className="mt-4 pt-3 border-t border-slate-200 bg-slate-50 -mx-5 -mb-5 p-4 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-600">
             <span className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-blue-600 shrink-0" />
-              Upgrade Dencun (EIP-4844) reduziu as taxas de dados de rollup em até 95%.
+              Upgrade Dencun (EIP-4844) &gt; 95% gas reduction.
             </span>
             <span className="font-bold text-blue-800 bg-blue-100/70 border border-blue-200 px-2 py-0.5 rounded-md text-[11px]">
-              Ethereum L1 = Âncora de Segurança
+              Ethereum L1 = Sovereign Anchor
             </span>
           </div>
         </div>

@@ -45,10 +45,15 @@ export default function ForecastChart({
   channelHistoryFull = [],
   methodologyFramework = {},
   indicatorsForecast = {},
-  simulatedFairValue = null
+  simulatedFairValue = null,
+  t,
+  lang = 'pt'
 }) {
   const chartContainerRef = useRef(null);
   const chartInstance = useRef(null);
+
+  const tf = t?.forecast || {};
+  const activeMilestonesList = tf.milestones && tf.milestones.length > 0 ? tf.milestones : ETH_MILESTONES;
 
   // Estados de controle
   const [selectedHorizon, setSelectedHorizon] = useState('30d'); // '7d' | '30d' | '90d' | '180d' | '365d'
@@ -428,37 +433,35 @@ export default function ForecastChart({
             <Compass className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              Cenários Opinativos TimesFM 3.0
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                Metodologia Híbrida Estrutural
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-slate-900 text-sm">{tf.scenariosTitle || 'Cenários Opinativos TimesFM 3.0'}</span>
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                {tf.scenariosBadge || 'Metodologia Híbrida Estrutural'}
               </span>
-            </span>
-            <p className="text-[11px] text-slate-500">
-              Parecer conjunto Fable 5.1 (Validação de Modelos) & Astra 6 (Design Analítico)
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {tf.scenariosSubtitle || 'Parecer conjunto Fable 5.1 (Validação Estatística) & Astra 6 (Design Analítico)'}
             </p>
           </div>
         </div>
 
+        {/* Botões de Seleção de Cenário */}
         <div className="flex flex-wrap items-center gap-2">
           {[
             { 
               id: 'base', 
-              name: 'Cenário Base', 
-              prob: '55%', 
-              tag: 'Expansão L2 & Fair Value'
+              name: tf.scenarioBase || 'Cenário Base', 
+              prob: tf.scenarioBaseProb || '55%'
             },
             { 
               id: 'bull', 
-              name: 'Super Asset Bullish', 
-              prob: '30%', 
-              tag: 'Choque Supply & Queima'
+              name: tf.scenarioBull || 'Super Asset Bullish', 
+              prob: tf.scenarioBullProb || '30%'
             },
             { 
               id: 'bear', 
-              name: 'Conservador / Floor', 
-              prob: '15%', 
-              tag: 'Piso Realized Price'
+              name: tf.scenarioBear || 'Conservador / Floor', 
+              prob: tf.scenarioBearProb || '15%'
             }
           ].map(sc => (
             <button
@@ -489,16 +492,16 @@ export default function ForecastChart({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">
-              Previsão de Preço com Google TimesFM 3.0
+              {tf.title || 'Previsão de Preço com Google TimesFM 3.0'}
             </h2>
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70">
-              SOTA #1 Benchmark
+              {tf.badge || 'SOTA #1 Benchmark'}
             </span>
           </div>
 
           {/* Seletor de Horizonte de Projeção Estendido */}
           <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center gap-1">
-            <span className="text-[10px] uppercase font-bold text-slate-600 px-2">Projeção:</span>
+            <span className="text-[10px] uppercase font-bold text-slate-600 px-2">{tf.projectionHorizon || 'Projeção:'}</span>
             {[
               { id: '7d', label: '7D' },
               { id: '30d', label: '30D' },
@@ -532,7 +535,7 @@ export default function ForecastChart({
                 chartType === 'candles' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Candles
+              {tf.candles || 'Candles'}
             </button>
             <button
               onClick={() => setChartType('line')}
@@ -540,7 +543,7 @@ export default function ForecastChart({
                 chartType === 'line' ? 'bg-white text-slate-900 shadow-2xs font-semibold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Linha
+              {tf.line || 'Linha'}
             </button>
           </div>
 
@@ -551,18 +554,16 @@ export default function ForecastChart({
               className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
                 scaleMode === 'normal' ? 'bg-white text-blue-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="Escala Linear Convencional"
             >
-              Linear
+              {tf.linearScale || 'Linear'}
             </button>
             <button
               onClick={() => setScaleMode('log')}
               className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
                 scaleMode === 'log' ? 'bg-white text-blue-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="Escala Logarítmica para ciclos seculares de longo prazo"
             >
-              Log
+              {tf.logScale || 'Log'}
             </button>
           </div>
 
@@ -570,29 +571,28 @@ export default function ForecastChart({
 
       </div>
 
-      {/* Régua de Navegação Temporal Completa (Estilo ETHval) */}
+      {/* Régua de Navegação Temporal Completa */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 pb-2 text-xs border-b border-slate-100">
         
         {/* Alcance Histórico (Range) */}
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="text-[10px] uppercase font-bold text-slate-600 flex items-center gap-1 mr-1">
             <Clock className="w-3.5 h-3.5 text-blue-600" />
-            Janela Temporal:
+            {tf.timeWindow || 'Janela Temporal:'}
           </span>
           {[
             { id: '30d', label: '30D' },
             { id: '90d', label: '90D' },
             { id: '180d', label: '180D' },
-            { id: '1y', label: '1 Ano' },
-            { id: '3y', label: '3 Anos' },
-            { id: '5y', label: '5 Anos' },
-            { id: 'all', label: 'Histórico Total (2015–2026)', highlight: true }
+            { id: '1y', label: '1Y' },
+            { id: '3y', label: '3Y' },
+            { id: '5y', label: '5Y' },
+            { id: 'all', label: tf.fullHistory || 'Histórico Total (2015–2026)', highlight: true }
           ].map(r => (
             <button
               key={r.id}
               onClick={() => {
                 setSelectedRange(r.id);
-                // Se for all ou 5y, muda automaticamente para log scale para melhor visualização
                 if (r.id === 'all' || r.id === '5y') {
                   setScaleMode('log');
                 }
@@ -612,11 +612,11 @@ export default function ForecastChart({
 
         {/* Frequência do Candle */}
         <div className="flex items-center gap-1 bg-slate-100/90 border border-slate-200 rounded-lg p-0.5">
-          <span className="text-[10px] uppercase font-bold text-slate-600 px-1.5">Frequência:</span>
+          <span className="text-[10px] uppercase font-bold text-slate-600 px-1.5">{tf.frequency || 'Frequência:'}</span>
           {[
-            { id: '1d', label: '1D Diário' },
-            { id: '1w', label: '1W Semanal' },
-            { id: '1m', label: '1M Mensal' }
+            { id: '1d', label: '1D' },
+            { id: '1w', label: '1W' },
+            { id: '1m', label: '1M' }
           ].map(f => (
             <button
               key={f.id}
@@ -639,19 +639,20 @@ export default function ForecastChart({
         <div className="flex items-center justify-between mb-1.5 text-xs">
           <span className="font-semibold text-slate-600 flex items-center gap-1.5 text-[11px]">
             <Landmark className="w-3.5 h-3.5 text-blue-600" />
-            Marcos Históricos da Ethereum (Clique para Explorar):
+            {tf.milestonesTitle || 'Marcos Históricos da Ethereum (Clique para Explorar):'}
           </span>
           <button
             onClick={() => setShowMilestones(!showMilestones)}
-            className="text-[10px] font-semibold text-blue-600 hover:underline cursor-pointer"
+            className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 cursor-pointer flex items-center gap-1"
           >
-            {showMilestones ? 'Ocultar Marcos' : 'Exibir Marcos'}
+            <Eye className="w-3 h-3" />
+            <span>{showMilestones ? (tf.hideMilestones || 'Ocultar Marcos') : (tf.showMilestones || 'Exibir Marcos')}</span>
           </button>
         </div>
 
         {showMilestones && (
           <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
-            {ETH_MILESTONES.map(m => {
+            {activeMilestonesList.map(m => {
               const isSelected = activeMilestone?.id === m.id;
               return (
                 <button
@@ -713,14 +714,14 @@ export default function ForecastChart({
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 text-slate-700 font-semibold mr-1">
             <Sliders className="w-3.5 h-3.5 text-blue-600" />
-            <span>Bandas Estocásticas:</span>
+            <span>{tf.stochasticBands || 'Bandas Estocásticas:'}</span>
           </div>
           {[
-            { id: 'fan', label: 'Leque Completo (Fan Chart)' },
-            { id: 'p10_p90', label: 'Banda 80% (P10-P90)' },
-            { id: 'p20_p80', label: 'Banda 60% (P20-P80)' },
-            { id: 'p30_p70', label: 'Banda 40% (P30-P70)' },
-            { id: 'none', label: 'Ocultar' }
+            { id: 'fan', label: tf.fanChart || 'Leque Completo (Fan Chart)' },
+            { id: 'p10_p90', label: tf.band80 || 'Banda 80% (P10-P90)' },
+            { id: 'p20_p80', label: tf.band60 || 'Banda 60% (P20-P80)' },
+            { id: 'p30_p70', label: tf.band40 || 'Banda 40% (P30-P70)' },
+            { id: 'none', label: tf.hideBands || 'Ocultar' }
           ].map(b => (
             <button
               key={b.id}
@@ -748,9 +749,9 @@ export default function ForecastChart({
             title="Exibe o Canal de Regressão Logarítmica Secular (Power-Law 2015-2026), Fair Value e Pisos On-Chain"
           >
             <Activity className={`w-3.5 h-3.5 ${showSecularChannel ? 'text-purple-600' : 'text-slate-400'}`} />
-            <span>Canal Secular & Pisos On-Chain:</span>
+            <span>{tf.secularChannel || 'Canal Secular & Pisos On-Chain:'}</span>
             <span className={`font-mono font-bold ${showSecularChannel ? 'text-purple-700' : 'text-slate-500'}`}>
-              {showSecularChannel ? 'Ativo' : 'Oculto'}
+              {showSecularChannel ? (tf.channelActive || 'Ativo') : (tf.channelInactive || 'Oculto')}
             </span>
           </button>
         </div>
@@ -760,7 +761,7 @@ export default function ForecastChart({
       {currentForecast && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 py-4 border-b border-slate-200">
           <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-200/80">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Cotação Atual</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{tf.currentSpot || 'Cotação Atual'}</p>
             <p className="text-base font-bold text-slate-900 mt-0.5 font-mono">
               ${currentForecast.current_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
@@ -768,7 +769,7 @@ export default function ForecastChart({
 
           <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100">
             <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">
-              Previsão Mediana (P50 - {selectedHorizon.toUpperCase()})
+              {tf.medianForecast || 'Previsão Mediana'} (P50 - {selectedHorizon.toUpperCase()})
             </p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-base font-bold text-blue-700 font-mono">
@@ -785,14 +786,14 @@ export default function ForecastChart({
           </div>
 
           <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-200/80">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Banda Inferior (P10)</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{tf.lowerBand || 'Banda Inferior (P10)'}</p>
             <p className="text-base font-bold text-slate-700 mt-0.5 font-mono">
               ${currentForecast.range_p10_p90[0]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
 
           <div className="bg-slate-50/80 rounded-xl p-3 border border-slate-200/80">
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Banda Superior (P90)</p>
+            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">{tf.upperBand || 'Banda Superior (P90)'}</p>
             <p className="text-base font-bold text-slate-700 mt-0.5 font-mono">
               ${currentForecast.range_p10_p90[1]?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
@@ -808,7 +809,7 @@ export default function ForecastChart({
         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md border border-slate-200 px-3 py-2 rounded-lg text-xs flex flex-wrap items-center gap-3 pointer-events-none shadow-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 bg-sky-600"></span>
-            <span className="text-slate-700 font-medium">Histórico ({selectedTimeframe.toUpperCase()})</span>
+            <span className="text-slate-700 font-medium">{tf.historyLabel || 'Histórico'} ({selectedTimeframe.toUpperCase()})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-1 bg-blue-600 rounded-xs"></span>
@@ -817,7 +818,7 @@ export default function ForecastChart({
           {bandMode === 'fan' && (
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-2 bg-gradient-to-t from-blue-600/40 via-blue-500/20 to-blue-400/10 border border-blue-500/50 rounded-xs"></span>
-              <span className="text-slate-600 font-medium">Fan Chart (9 Quantis)</span>
+              <span className="text-slate-600 font-medium">{tf.fanChartLabel || 'Fan Chart (9 Quantis)'}</span>
             </div>
           )}
           {showSecularChannel && (
@@ -840,7 +841,7 @@ export default function ForecastChart({
           )}
           {scaleMode === 'log' && (
             <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
-              Escala Log
+              {tf.logScale || 'Escala Log'}
             </span>
           )}
         </div>
@@ -856,13 +857,13 @@ export default function ForecastChart({
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  Reconciliação Hierárquica Multi-Timeframe ({selectedHorizon.toUpperCase()})
+                  {tf.reconciliationTitle || 'Reconciliação Hierárquica Multi-Timeframe'} ({selectedHorizon.toUpperCase()})
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 uppercase tracking-wider">
-                    {currentForecast.explanation?.direction || 'Alta Consistente'}
+                    {tf.reconciliationBadge || 'Alta Consistente'}
                   </span>
                 </h4>
                 <p className="text-xs text-slate-500">
-                  Cruzamento dinâmico entre a microestrutura diária e a âncora macro secular (2015-2026)
+                  {tf.reconciliationDesc || 'Cruzamento dinâmico entre a microestrutura diária e a âncora macro secular (2015-2026)'}
                 </p>
               </div>
             </div>
@@ -870,13 +871,13 @@ export default function ForecastChart({
             {/* Badges de Comparação de Níveis */}
             <div className="flex items-center gap-2 text-xs">
               <div className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-2xs">
-                <span className="text-slate-500 text-[11px]">Sinal Diário Bruto: </span>
+                <span className="text-slate-500 text-[11px]">{tf.dailyRawSignal || 'Sinal Diário Bruto'}: </span>
                 <span className="font-bold text-slate-800 font-mono">
                   ${(currentForecast.daily_unreconciled || currentForecast.expected_price)?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
               </div>
               <div className="bg-white px-2.5 py-1 rounded-lg border border-blue-200 shadow-2xs">
-                <span className="text-blue-700 text-[11px]">Âncora Macro Semanal: </span>
+                <span className="text-blue-700 text-[11px]">{tf.weeklyMacroAnchor || 'Âncora Macro Semanal'}: </span>
                 <span className="font-bold text-blue-800 font-mono">
                   ${(currentForecast.weekly_macro_anchor || currentForecast.expected_price)?.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                 </span>
@@ -896,7 +897,7 @@ export default function ForecastChart({
             <div className="bg-white/90 p-3 rounded-lg border border-blue-100 space-y-1.5 flex flex-col justify-center">
               <div className="flex items-center gap-1.5 text-blue-700 font-semibold text-xs">
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
-                <span>Calibração Hierárquica de Alta Assertividade:</span>
+                <span>{tf.hierarchicalCalibration || 'Calibração Hierárquica de Alta Assertividade'}:</span>
               </div>
               <p className="text-slate-600 text-[11px] leading-relaxed">
                 {currentForecast.explanation?.cross_validation || 'Ponderação hierárquica ótima eliminando ruídos de cauda e concentrando a probabilidade na tendência estrutural de múltiplos ciclos.'}
@@ -915,20 +916,20 @@ export default function ForecastChart({
             </div>
             <div>
               <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                Parecer Opinativo dos Agentes: Aplicação Correta do TimesFM no Ethereum
+                {tf.agentOpinionTitle || 'Parecer Opinativo dos Agentes: Aplicação Correta do TimesFM no Ethereum'}
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80">
                   Fable 5.1 & Astra 6
                 </span>
               </h4>
               <p className="text-xs text-slate-500">
-                Diagnóstico de falha de modelos puros de fundação e solução via Decomposição Híbrida Estrutural-Estocástica
+                {tf.agentOpinionSubtitle || 'Diagnóstico de falha de modelos puros de fundação e solução via Decomposição Híbrida Estrutural-Estocástica'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5 text-xs text-slate-600">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Âncoras Econômicas Validadas On-Chain</span>
+            <span>{tf.anchorsValidated || 'Âncoras Econômicas Validadas On-Chain'}</span>
           </div>
         </div>
 
@@ -937,42 +938,42 @@ export default function ForecastChart({
           <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200/80 space-y-1.5">
             <span className="font-bold text-rose-700 uppercase tracking-wider text-[10px] flex items-center gap-1">
               <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
-              1. O Problema da Previsão Pura
+              {tf.pureProblemTitle || '1. O Problema da Previsão Pura'}
             </span>
             <p className="text-slate-600 leading-relaxed">
-              O TimesFM pré-treinado presume séries industriais estacionárias aditivas. Aplicado diretamente sobre o preço nominal ($2.470), ele gera uma linha horizontal irrealista por presumir reversão linear simples, ignorando halving, ciclo secular e pisos on-chain.
+              {tf.pureProblemDesc || 'O TimesFM pré-treinado presume séries industriais estacionárias aditivas. Aplicado diretamente sobre o preço nominal ($2.470), ele gera uma linha horizontal irrealista por presumir reversão linear simples, ignorando halving, ciclo secular e pisos on-chain.'}
             </p>
           </div>
 
           <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200/80 space-y-1.5">
             <span className="font-bold text-indigo-700 uppercase tracking-wider text-[10px] flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              2. Metodologia Híbrida Estrutural
+              {tf.hybridMethodTitle || '2. Metodologia Híbrida Estrutural'}
             </span>
             <p className="text-slate-600 leading-relaxed font-mono text-[11px]">
               ln P_t = Φ_macro(t) + Γ_ciclo(t) + z_t
             </p>
             <p className="text-slate-600 leading-relaxed">
-              Decompõe o log-preço no Canal Secular Power-Law (2015-2026). O TimesFM 3.0 atua exclusivamente onde é estado da arte mundial: modelando as transições de regime e resíduos estocásticos z_t.
+              {tf.hybridMethodDesc || 'Decompõe o log-preço no Canal Secular Power-Law (2015-2026). O TimesFM 3.0 atua exclusivamente onde é estado da arte mundial: modelando as transições de regime e resíduos estocásticos z_t.'}
             </p>
           </div>
 
           <div className="p-3.5 rounded-lg bg-blue-50/50 border border-blue-100 space-y-1.5">
             <span className="font-bold text-blue-800 uppercase tracking-wider text-[10px] flex items-center gap-1">
               <Activity className="w-3.5 h-3.5 text-blue-600" />
-              3. Regimes Detectados no TimesFM 3.0
+              {tf.regimesTitle || '3. Regimes Detectados no TimesFM 3.0'}
             </span>
             <div className="space-y-1 pt-0.5">
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-slate-600">Expansão Estrutural (180D):</span>
+                <span className="text-slate-600">{tf.regimeExpansion || 'Expansão Estrutural (180D):'}</span>
                 <span className="font-bold text-emerald-700 font-mono">62%</span>
               </div>
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-slate-600">Consolidação em Faixa:</span>
+                <span className="text-slate-600">{tf.regimeConsolidation || 'Consolidação em Faixa:'}</span>
                 <span className="font-bold text-blue-700 font-mono">28%</span>
               </div>
               <div className="flex justify-between items-center text-[11px]">
-                <span className="text-slate-600">Teste do Realized Price:</span>
+                <span className="text-slate-600">{tf.regimeRealized || 'Teste do Realized Price:'}</span>
                 <span className="font-bold text-amber-700 font-mono">10%</span>
               </div>
             </div>
@@ -982,24 +983,24 @@ export default function ForecastChart({
         {/* 4 Âncoras On-Chain */}
         <div className="mt-3.5 grid grid-cols-2 md:grid-cols-4 gap-2.5 pt-3 border-t border-slate-100 text-xs">
           <div className="p-2.5 bg-slate-50/60 rounded-lg border border-slate-200/70">
-            <p className="text-[10px] text-slate-500 font-semibold uppercase">Piso Realized Price</p>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase">{tf.floorRealized || 'Piso Realized Price'}</p>
             <p className="text-sm font-bold text-slate-900 font-mono mt-0.5">$2.010 USD</p>
-            <p className="text-[10px] text-slate-500">Custo base médio da rede</p>
+            <p className="text-[10px] text-slate-500">{tf.floorRealizedSub || 'Custo base médio da rede'}</p>
           </div>
           <div className="p-2.5 bg-slate-50/60 rounded-lg border border-slate-200/70">
-            <p className="text-[10px] text-slate-500 font-semibold uppercase">Piso Staking Capitalizado</p>
+            <p className="text-[10px] text-slate-500 font-semibold uppercase">{tf.floorStaking || 'Piso Staking Capitalizado'}</p>
             <p className="text-sm font-bold text-slate-900 font-mono mt-0.5">$1.920 USD</p>
-            <p className="text-[10px] text-slate-500">Piso de segurança do PoS</p>
+            <p className="text-[10px] text-slate-500">{tf.floorStakingSub || 'Piso de segurança do PoS'}</p>
           </div>
           <div className="p-2.5 bg-purple-50/50 rounded-lg border border-purple-200/70">
-            <p className="text-[10px] text-purple-700 font-semibold uppercase">Fair Value Metcalfe</p>
+            <p className="text-[10px] text-purple-700 font-semibold uppercase">{tf.fairMetcalfe || 'Fair Value Metcalfe'}</p>
             <p className="text-sm font-bold text-purple-900 font-mono mt-0.5">$3.444 USD</p>
-            <p className="text-[10px] text-purple-700">Equilíbrio da curva de adoção</p>
+            <p className="text-[10px] text-purple-700">{tf.fairMetcalfeSub || 'Equilíbrio da curva de adoção'}</p>
           </div>
           <div className="p-2.5 bg-amber-50/50 rounded-lg border border-amber-200/70">
-            <p className="text-[10px] text-amber-800 font-semibold uppercase">Topo Teórico do Ciclo</p>
+            <p className="text-[10px] text-amber-800 font-semibold uppercase">{tf.topCycle || 'Topo Teórico do Ciclo'}</p>
             <p className="text-sm font-bold text-amber-900 font-mono mt-0.5">$14.254 USD</p>
-            <p className="text-[10px] text-amber-800">Banda superior de euforia</p>
+            <p className="text-[10px] text-amber-800">{tf.topCycleSub || 'Banda superior de euforia'}</p>
           </div>
         </div>
       </div>
@@ -1010,9 +1011,9 @@ export default function ForecastChart({
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
               <Layers className="w-4 h-4 text-blue-600" />
-              Projeções de Indicadores On-Chain com TimesFM 3.0 (30 Dias)
+              {tf.onchainForecastTitle || 'Projeções de Indicadores On-Chain com TimesFM 3.0 (30 Dias)'}
             </h3>
-            <span className="text-[11px] text-slate-500 font-medium">Auto-regressivo multivariado</span>
+            <span className="text-[11px] text-slate-500 font-medium">{tf.onchainForecastSub || 'Auto-regressivo multivariado'}</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1023,7 +1024,7 @@ export default function ForecastChart({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-600 flex items-center gap-1.5 font-medium">
                     <Vault className="w-3.5 h-3.5 text-blue-600" />
-                    TVL DeFi Projetado
+                    {tf.tvlProjTitle || 'TVL DeFi Projetado'}
                   </span>
                   <span className="font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded text-[11px]">
                     +{indicatorsForecast.tvl_30d.change_pct}%
@@ -1033,7 +1034,7 @@ export default function ForecastChart({
                   ${indicatorsForecast.tvl_30d.projected_median_bn_usd}B
                 </p>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Faixa P10–P90: ${indicatorsForecast.tvl_30d.p10_p90[0]}B a ${indicatorsForecast.tvl_30d.p10_p90[1]}B
+                  {tf.rangePrefix || 'Faixa P10–P90:'} ${indicatorsForecast.tvl_30d.p10_p90[0]}B a ${indicatorsForecast.tvl_30d.p10_p90[1]}B
                 </p>
               </div>
             )}
@@ -1044,7 +1045,7 @@ export default function ForecastChart({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-600 flex items-center gap-1.5 font-medium">
                     <Flame className="w-3.5 h-3.5 text-amber-600" />
-                    Queima Estimada (30D)
+                    {tf.burnProjTitle || 'Queima Estimada (30D)'}
                   </span>
                   <span className="font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-1.5 py-0.5 rounded text-[11px]">
                     ~{indicatorsForecast.daily_burn_30d.projected_median_eth_day} ETH/dia
@@ -1054,7 +1055,7 @@ export default function ForecastChart({
                   {indicatorsForecast.daily_burn_30d.cumulative_30d_eth?.toLocaleString()} ETH
                 </p>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Total a ser destruído e retirado de circulação em 30 dias
+                  {tf.burnProjSub || 'Total a ser destruído e retirado de circulação em 30 dias'}
                 </p>
               </div>
             )}
@@ -1065,7 +1066,7 @@ export default function ForecastChart({
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-600 flex items-center gap-1.5 font-medium">
                     <Cpu className="w-3.5 h-3.5 text-sky-600" />
-                    TPS Médio de L2s
+                    {tf.tpsProjTitle || 'TPS Médio de L2s'}
                   </span>
                   <span className="font-bold text-sky-700 bg-sky-50 border border-sky-200/60 px-1.5 py-0.5 rounded text-[11px]">
                     +{indicatorsForecast.l2_tps_30d.change_pct}%
@@ -1075,7 +1076,7 @@ export default function ForecastChart({
                   {indicatorsForecast.l2_tps_30d.projected_median_tps} tx/s
                 </p>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  Faixa P10–P90: {indicatorsForecast.l2_tps_30d.p10_p90[0]} a {indicatorsForecast.l2_tps_30d.p10_p90[1]} tx/s
+                  {tf.rangePrefix || 'Faixa P10–P90:'} {indicatorsForecast.l2_tps_30d.p10_p90[0]} a {indicatorsForecast.l2_tps_30d.p10_p90[1]} tx/s
                 </p>
               </div>
             )}

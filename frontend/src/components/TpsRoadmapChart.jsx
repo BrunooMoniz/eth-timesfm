@@ -2,9 +2,10 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { createChart, ColorType, LineSeries, AreaSeries } from 'lightweight-charts';
 import { Cpu, Sparkles, Compass, Eye } from 'lucide-react';
 
-export default function TpsRoadmapChart({ tpsRoadmapData }) {
+export default function TpsRoadmapChart({ tpsRoadmapData, t, lang = 'pt' }) {
   const chartContainerRef = useRef(null);
   const chartInstance = useRef(null);
+  const tsc = t?.scaling || {};
 
   const [tpsHorizon, setTpsHorizon] = useState('365d'); // '30d' | '90d' | '180d' | '365d'
   const [showFanBands, setShowFanBands] = useState(true);
@@ -211,16 +212,18 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-5 gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Roadmap de Escalabilidade</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-600">
+              {tsc.badge || "Roadmap de Escalabilidade"}
+            </span>
             <span className="text-slate-300">•</span>
             <span className="text-xs font-medium text-slate-500">The Surge & PeerDAS</span>
           </div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight mt-1">
-            Throughput de Rede (TPS) & Projeção TimesFM 3.0
+            {tsc.title || "Throughput de Rede (TPS) & Projeção TimesFM 3.0"}
           </h2>
         </div>
         <p className="text-xs text-slate-600 max-w-xl leading-relaxed">
-          Monitoramento do throughput histórico entre a Camada 1 e o ecossistema de Rollups (L2s), com projeção estocástica do Google TimesFM 3.0 rumo aos 10.000+ TPS sob o avanço de PeerDAS.
+          {tsc.subtitle || "Monitoramento do throughput histórico entre a Camada 1 e o ecossistema de Rollups (L2s), com projeção estocástica do Google TimesFM 3.0 rumo aos 10.000+ TPS sob o avanço de PeerDAS."}
         </p>
       </div>
 
@@ -229,47 +232,61 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
         
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-semibold uppercase tracking-wider text-[10px]">L1 Base TPS</span>
-            <span className="p-1 rounded-md bg-slate-100 text-slate-600 font-mono text-[10px]">Segurança</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px]">
+              {tsc.currentL1 || "L1 Base TPS"}
+            </span>
+            <span className="p-1 rounded-md bg-slate-100 text-slate-600 font-mono text-[10px]">L1</span>
           </div>
           <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
             {l1_current_tps} <span className="text-xs font-normal text-slate-500">tx/s</span>
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">Câmara de compensação definitiva</p>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {tsc.currentL1Sub || "Câmara de compensação definitiva"}
+          </p>
         </div>
 
         <div className="bg-white border border-sky-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-sky-700">
-            <span className="font-semibold uppercase tracking-wider text-[10px]">L2s Agregado Atual</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px]">
+              {tsc.currentL2 || "L2s Agregado Atual"}
+            </span>
             <span className="p-1 rounded-md bg-sky-50 text-sky-700 font-mono text-[10px]">Rollups</span>
           </div>
           <p className="text-2xl font-bold text-sky-700 font-mono mt-1">
             {l2_current_aggregated_tps} <span className="text-xs font-normal text-sky-600">tx/s</span>
           </p>
-          <p className="text-[11px] text-slate-500 mt-1">Escala de execução paralela</p>
+          <p className="text-[11px] text-slate-500 mt-1">
+            {tsc.currentL2Sub || "Escala de execução paralela"}
+          </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-slate-500">
-            <span className="font-semibold uppercase tracking-wider text-[10px]">Throughput Global</span>
+            <span className="font-semibold uppercase tracking-wider text-[10px]">
+              {tsc.totalTps || "Throughput Global"}
+            </span>
             <span className="p-1 rounded-md bg-blue-50 text-blue-700 font-mono text-[10px]">L1 + L2s</span>
           </div>
           <p className="text-2xl font-bold text-slate-900 font-mono mt-1">
             {total_current_tps} <span className="text-xs font-normal text-slate-500">tx/s</span>
           </p>
-          <p className="text-[11px] text-emerald-700 font-medium mt-1">+890% vs capacidade L1 pura</p>
+          <p className="text-[11px] text-emerald-700 font-medium mt-1">
+            {tsc.multiplierLabel || "+890% vs capacidade L1 pura"}
+          </p>
         </div>
 
         <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-4 shadow-xs">
           <div className="flex items-center justify-between text-xs text-blue-700">
-            <span className="font-bold uppercase tracking-wider text-[10px]">Projeção 365D (TimesFM)</span>
+            <span className="font-bold uppercase tracking-wider text-[10px]">
+              {tsc.projection365d || "Projeção 365D (TimesFM)"}
+            </span>
             <span className="p-1 rounded-md bg-blue-100 text-blue-800 font-mono text-[10px]">PeerDAS</span>
           </div>
           <p className="text-2xl font-bold text-blue-800 font-mono mt-1">
             ~{l2_forecast_365d.expected_365d_tps || 339.9} <span className="text-xs font-normal text-blue-600">tx/s</span>
           </p>
           <p className="text-[11px] text-blue-700 mt-1">
-            Faixa P10–P90: {l2_forecast_365d.range_p10_p90_365d?.[0] || 184.5} a {l2_forecast_365d.range_p10_p90_365d?.[1] || 415.2} tx/s
+            {tsc.rangePrefix || "Faixa P10–P90:"} {l2_forecast_365d.range_p10_p90_365d?.[0] || 184.5} a {l2_forecast_365d.range_p10_p90_365d?.[1] || 415.2} tx/s
           </p>
         </div>
 
@@ -284,14 +301,14 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-slate-700 flex items-center gap-1.5">
               <Cpu className="w-4 h-4 text-blue-600" />
-              Projeção de Escalabilidade:
+              {tsc.horizonSelector || "Projeção de Escalabilidade:"}
             </span>
             <div className="bg-slate-100 border border-slate-200 rounded-xl p-1 flex items-center gap-1">
               {[
-                { id: '30d', label: '30 Dias' },
-                { id: '90d', label: '90 Dias' },
-                { id: '180d', label: '180 Dias' },
-                { id: '365d', label: '365 Dias (1 Ano)' },
+                { id: '30d', label: tsc.horizon30 || '30 Dias' },
+                { id: '90d', label: tsc.horizon90 || '90 Dias' },
+                { id: '180d', label: tsc.horizon180 || '180 Dias' },
+                { id: '365d', label: tsc.horizon365 || '365 Dias (1 Ano)' },
               ].map(h => (
                 <button
                   key={h.id}
@@ -317,7 +334,7 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
-              Bandas Fan Chart
+              {tsc.fanBandsToggle || "Bandas Fan Chart"}
             </button>
 
             <button
@@ -326,7 +343,7 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
                 showL1 ? 'bg-slate-100 text-slate-800 border-slate-300' : 'text-slate-400 border-slate-200'
               }`}
             >
-              L1
+              {tsc.showL1Toggle || "L1 Base"}
             </button>
             <button
               onClick={() => setShowL2History(!showL2History)}
@@ -334,7 +351,7 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
                 showL2History ? 'bg-sky-50 text-sky-700 border-sky-300 font-semibold' : 'text-slate-400 border-slate-200'
               }`}
             >
-              L2 Real
+              {tsc.showL2Toggle || "L2 Real"}
             </button>
             <button
               onClick={() => setShowTotalHistory(!showTotalHistory)}
@@ -342,7 +359,7 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
                 showTotalHistory ? 'bg-indigo-50 text-indigo-800 border-indigo-300 font-semibold' : 'text-slate-400 border-slate-200'
               }`}
             >
-              Total
+              {tsc.showTotalToggle || "Total"}
             </button>
           </div>
 
@@ -356,19 +373,19 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
           <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md border border-slate-200 px-3 py-2 rounded-lg text-xs flex flex-wrap items-center gap-3.5 pointer-events-none shadow-xs">
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-0.5 bg-slate-500"></span>
-              <span className="text-slate-600 font-medium">L1 TPS (12.6 tx/s)</span>
+              <span className="text-slate-600 font-medium">{tsc.legendL1 || "L1 TPS (12.6 tx/s)"}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-0.5 bg-sky-600"></span>
-              <span className="text-slate-700 font-medium">L2s Agregado (114.9 tx/s)</span>
+              <span className="text-slate-700 font-medium">{tsc.legendL2 || "L2s Agregado (114.9 tx/s)"}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-0.5 bg-indigo-900"></span>
-              <span className="text-slate-800 font-medium">Total (127.5 tx/s)</span>
+              <span className="text-slate-800 font-medium">{tsc.legendTotal || "Total (127.5 tx/s)"}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-1 bg-blue-600 rounded-xs"></span>
-              <span className="text-blue-700 font-bold">TimesFM 3.0 Projeção L2 ({tpsHorizon.toUpperCase()})</span>
+              <span className="text-blue-700 font-bold">TimesFM 3.0 L2 ({tpsHorizon.toUpperCase()})</span>
             </div>
           </div>
         </div>
@@ -376,35 +393,35 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
         {/* Milestones de Escalabilidade do TimesFM */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4 pt-4 border-t border-slate-200 text-xs">
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
-            <p className="text-[10px] uppercase font-bold text-slate-500">Alvo 30 Dias (Tático)</p>
+            <p className="text-[10px] uppercase font-bold text-slate-500">{tsc.target30 || "Alvo 30 Dias (Tático)"}</p>
             <p className="text-base font-bold text-slate-900 font-mono mt-0.5">
               {l2_forecast_365d.expected_30d_tps || 131.9} tx/s
             </p>
-            <span className="text-[11px] text-emerald-700 font-semibold">+14.8% expansão</span>
+            <span className="text-[11px] text-emerald-700 font-semibold">+14.8%</span>
           </div>
 
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
-            <p className="text-[10px] uppercase font-bold text-slate-500">Alvo 90 Dias (Médio)</p>
+            <p className="text-[10px] uppercase font-bold text-slate-500">{tsc.target90 || "Alvo 90 Dias (Médio)"}</p>
             <p className="text-base font-bold text-slate-900 font-mono mt-0.5">
               {l2_forecast_365d.expected_90d_tps || 151.0} tx/s
             </p>
-            <span className="text-[11px] text-emerald-700 font-semibold">+31.4% expansão</span>
+            <span className="text-[11px] text-emerald-700 font-semibold">+31.4%</span>
           </div>
 
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
-            <p className="text-[10px] uppercase font-bold text-slate-500">Alvo 180 Dias (Semestral)</p>
+            <p className="text-[10px] uppercase font-bold text-slate-500">{tsc.target180 || "Alvo 180 Dias (Semestral)"}</p>
             <p className="text-base font-bold text-blue-700 font-mono mt-0.5">
               {l2_forecast_365d.expected_180d_tps || 208.3} tx/s
             </p>
-            <span className="text-[11px] text-blue-700 font-semibold">+81.2% com PeerDAS</span>
+            <span className="text-[11px] text-blue-700 font-semibold">+81.2%</span>
           </div>
 
           <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-200">
-            <p className="text-[10px] uppercase font-bold text-blue-800">Alvo 365 Dias (1 Ano)</p>
+            <p className="text-[10px] uppercase font-bold text-blue-800">{tsc.target365 || "Alvo 365 Dias (1 Ano)"}</p>
             <p className="text-base font-bold text-blue-800 font-mono mt-0.5">
               {l2_forecast_365d.expected_365d_tps || 339.9} tx/s
             </p>
-            <span className="text-[11px] text-blue-700 font-semibold">+195.8% rumo a 10k TPS</span>
+            <span className="text-[11px] text-blue-700 font-semibold">+195.8%</span>
           </div>
         </div>
 
@@ -420,16 +437,16 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900 tracking-tight">
-                Fases do Roadmap Oficial do Ethereum
+                {tsc.roadmapTitle || "Fases do Roadmap Oficial do Ethereum"}
               </h3>
               <p className="text-xs text-slate-500">
-                Evolução contínua da arquitetura modular delineada pelos pesquisadores da Ethereum Foundation
+                {tsc.roadmapSub || "Evolução contínua da arquitetura modular delineada pelos pesquisadores da Ethereum Foundation"}
               </p>
             </div>
           </div>
           <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
             <Sparkles className="w-3.5 h-3.5" />
-            The Surge em Execução
+            {tsc.currentFocusBadge || "The Surge em Execução"}
           </span>
         </div>
 
@@ -451,14 +468,14 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
               >
                 {isSurge && (
                   <div className="absolute -top-2.5 right-3 bg-blue-600 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
-                    Foco Atual
+                    {tsc.currentFocus || "Foco Atual"}
                   </div>
                 )}
                 
                 <div>
                   <div className="flex items-center justify-between gap-1 mb-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      Fase {idx + 1}
+                      {tsc.phasePrefix || "Fase"} {idx + 1}
                     </span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                       isSurge
@@ -481,15 +498,15 @@ export default function TpsRoadmapChart({ tpsRoadmapData }) {
 
                   {phase.milestones && (
                     <div className="mt-2.5 pt-2 border-t border-blue-200 text-[11px] text-blue-800 font-medium">
-                      <strong>Marcos:</strong> {phase.milestones}
+                      <strong>{tsc.milestonesLabel || "Marcos:"}</strong> {phase.milestones}
                     </div>
                   )}
                 </div>
 
                 <div className="mt-3 pt-2 text-[11px] font-semibold flex items-center gap-1">
-                  {isMerge && <span className="text-emerald-700">✓ Entregue com Sucesso</span>}
-                  {isSurge && <span className="text-blue-700 font-bold">⚡ Acelerando Adoção</span>}
-                  {!isMerge && !isSurge && <span className="text-slate-500">Futuro Roadmap</span>}
+                  {isMerge && <span className="text-emerald-700">{tsc.deliveredSuccess || "✓ Entregue com Sucesso"}</span>}
+                  {isSurge && <span className="text-blue-700 font-bold">{tsc.acceleratingAdoption || "⚡ Acelerando Adoção"}</span>}
+                  {!isMerge && !isSurge && <span className="text-slate-500">{tsc.futureRoadmap || "Futuro Roadmap"}</span>}
                 </div>
               </div>
             );

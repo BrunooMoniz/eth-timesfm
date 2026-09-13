@@ -239,6 +239,8 @@ export default function App() {
                 weeklyForecast={weekly_forecast || []}
                 indicatorsForecast={data.indicators_forecast || {}}
                 simulatedFairValue={valuationResults.simulatedFairValue}
+                t={t}
+                lang={lang}
               />
             </div>
           )}
@@ -253,6 +255,8 @@ export default function App() {
                 currentPrice={currentPrice}
                 valuationResults={valuationResults}
                 onResetAll={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
+                t={t}
+                lang={lang}
               />
             </div>
           )}
@@ -262,6 +266,8 @@ export default function App() {
             <div className="space-y-6">
               <TpsRoadmapChart 
                 tpsRoadmapData={tps_roadmap_data}
+                t={t}
+                lang={lang}
               />
             </div>
           )}
@@ -270,19 +276,23 @@ export default function App() {
           {activePage === 'tese' && (
             <div className="space-y-6">
               {/* Diagramas Visuais do Modelo Mental */}
-              <MentalModelDiagrams t={t} />
+              <MentalModelDiagrams t={t} lang={lang} />
 
               {/* Pílulas de Conhecimento Práticas */}
-              <KnowledgePills t={t} />
+              <KnowledgePills t={t} lang={lang} />
 
               {/* O Ethereum como Super Asset */}
               <SuperAssetSection 
                 triplePointMetrics={fundamentals?.triple_point_metrics}
+                t={t}
+                lang={lang}
               />
 
               {/* O Ethereum como World Computer */}
               <WorldComputerSection 
                 worldComputerMetrics={fundamentals?.world_computer_metrics}
+                t={t}
+                lang={lang}
               />
             </div>
           )}
@@ -292,6 +302,8 @@ export default function App() {
             <div className="space-y-6">
               <ModelMethodology 
                 methodologyFramework={methodology_framework}
+                t={t}
+                lang={lang}
               />
             </div>
           )}
@@ -302,13 +314,13 @@ export default function App() {
       {/* Footer Limpo e Profissional */}
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 Ethereum TimesFM • Arquitetura Modular & IA Fundacional</p>
+          <p>{t.footer?.copyright || "© 2026 Ethereum TimesFM • Arquitetura Modular & IA Fundacional"}</p>
           <div className="flex items-center gap-4 text-slate-400">
-            <button onClick={() => navigateTo('previsao')} className="hover:text-blue-600 transition">Previsão</button>
-            <button onClick={() => navigateTo('valuation')} className="hover:text-blue-600 transition">Valuation</button>
-            <button onClick={() => navigateTo('escalabilidade')} className="hover:text-blue-600 transition">Escalabilidade</button>
-            <button onClick={() => navigateTo('tese')} className="hover:text-blue-600 transition">Tese</button>
-            <button onClick={() => navigateTo('metodologia')} className="hover:text-blue-600 transition">Metodologia</button>
+            <button onClick={() => navigateTo('previsao')} className="hover:text-blue-600 transition">{t.navForecast}</button>
+            <button onClick={() => navigateTo('valuation')} className="hover:text-blue-600 transition">{t.navValuation}</button>
+            <button onClick={() => navigateTo('escalabilidade')} className="hover:text-blue-600 transition">{t.navScaling}</button>
+            <button onClick={() => navigateTo('tese')} className="hover:text-blue-600 transition">{t.navThesis}</button>
+            <button onClick={() => navigateTo('metodologia')} className="hover:text-blue-600 transition">{t.navMethodology}</button>
           </div>
         </div>
       </footer>

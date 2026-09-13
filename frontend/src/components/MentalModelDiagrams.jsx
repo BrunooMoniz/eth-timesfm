@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { GitCompare, RefreshCw, Cpu, Database, Flame, ShieldCheck, ArrowRight, TrendingUp } from 'lucide-react';
 
-export default function MentalModelDiagrams({ t }) {
+export default function MentalModelDiagrams({ t, lang = 'pt' }) {
   const [activeTab, setActiveTab] = useState('flywheel');
+  const tt = t?.thesis || t || {};
 
   return (
     <section className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs my-6">
@@ -13,11 +14,11 @@ export default function MentalModelDiagrams({ t }) {
               <Cpu className="w-4 h-4" />
             </div>
             <h3 className="font-bold text-lg text-slate-900 tracking-tight">
-              {t.diagramsTitle}
+              {tt.diagramsTitle}
             </h3>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            {t.diagramsSubtitle}
+            {tt.diagramsSubtitle}
           </p>
         </div>
 
@@ -31,7 +32,7 @@ export default function MentalModelDiagrams({ t }) {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            {t.flywheelTab}
+            {tt.flywheelTab}
           </button>
           <button
             onClick={() => setActiveTab('timesfm')}
@@ -41,7 +42,7 @@ export default function MentalModelDiagrams({ t }) {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            {t.timesfmTab}
+            {tt.timesfmTab}
           </button>
         </div>
       </div>
@@ -58,13 +59,13 @@ export default function MentalModelDiagrams({ t }) {
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">Passo 1</span>
                   <Database className="w-4 h-4 text-blue-600" />
                 </div>
-                <h4 className="font-bold text-sm text-slate-900 mb-1">Adoção em L2s</h4>
+                <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.step1Title}</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Milhões de usuários transacionam em Arbitrum, Base e Optimism a custo sub-centavo.
+                  {tt.step1Desc}
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-slate-200/60 text-[11px] font-medium text-blue-700">
-                &gt; 120 tx/s agregados
+                {tt.step1Tag}
               </div>
             </div>
 
@@ -76,13 +77,13 @@ export default function MentalModelDiagrams({ t }) {
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">Passo 2</span>
                   <Flame className="w-4 h-4 text-amber-600" />
                 </div>
-                <h4 className="font-bold text-sm text-slate-900 mb-1">Queima de Blobs (L1)</h4>
+                <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.step2Title}</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  L2s publicam provas de estado e dados pagando gas na L1, ativando a queima EIP-1559.
+                  {tt.step2Desc}
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-slate-200/60 text-[11px] font-medium text-amber-700">
-                Combustão permanente
+                {tt.step2Tag}
               </div>
             </div>
 
@@ -94,13 +95,13 @@ export default function MentalModelDiagrams({ t }) {
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Passo 3</span>
                   <TrendingUp className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h4 className="font-bold text-sm text-slate-900 mb-1">Choque de Oferta</h4>
+                <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.step3Title}</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  A queima supera ou neutraliza a emissão PoS, tornando o ativo deflacionário ou ultra-escasso.
+                  {tt.step3Desc}
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-slate-200/60 text-[11px] font-medium text-emerald-700">
-                120.4M ETH supply fixo
+                {tt.step3Tag}
               </div>
             </div>
 
@@ -112,20 +113,20 @@ export default function MentalModelDiagrams({ t }) {
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">Passo 4</span>
                   <ShieldCheck className="w-4 h-4 text-purple-600" />
                 </div>
-                <h4 className="font-bold text-sm text-slate-900 mb-1">Segurança Econômica</h4>
+                <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.step4Title}</h4>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  ETH mais valorizado aumenta o custo de ataque (PoS), atraindo mais liquidez institucional e DeFi.
+                  {tt.step4Desc}
                 </p>
               </div>
               <div className="mt-3 pt-2 border-t border-slate-200/60 text-[11px] font-medium text-purple-700">
-                $109B TVL protegido
+                {tt.step4Tag}
               </div>
             </div>
           </div>
 
           <div className="bg-blue-50/60 border border-blue-200/80 rounded-xl p-3 text-center text-xs text-blue-900 font-medium flex items-center justify-center gap-2">
             <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" style={{ animationDuration: '8s' }} />
-            <span>Ciclo Autossustentável: Maior segurança atrai novas L2s e aplicações financeiras, reiniciando o ciclo com maior volume.</span>
+            <span>{tt.flywheelCycleText}</span>
           </div>
         </div>
       ) : (
@@ -135,52 +136,52 @@ export default function MentalModelDiagrams({ t }) {
             {/* Camada Micro */}
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">Camada Micro (1D)</span>
-                <span className="text-xs font-semibold text-slate-500">Alta Frequência</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">{tt.layerMicroTitle}</span>
+                <span className="text-xs font-semibold text-slate-500">{tt.layerMicroFreq}</span>
               </div>
-              <h4 className="font-bold text-sm text-slate-900 mb-1">Volatilidade & Candles</h4>
+              <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.layerMicroHeader}</h4>
               <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                Captura dinâmicas de liquidez spot diárias, desvios padrão e reversão à média estatística.
+                {tt.layerMicroDesc}
               </p>
               <div className="bg-white p-2 rounded border border-slate-200 text-[11px] text-slate-600 font-mono">
-                Contexto: 4.064 dias (2015–2026)
+                {tt.layerMicroContext}
               </div>
             </div>
 
             {/* Camada Meso */}
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Camada Meso (1W)</span>
-                <span className="text-xs font-semibold text-slate-500">Média Frequência</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">{tt.layerMesoTitle}</span>
+                <span className="text-xs font-semibold text-slate-500">{tt.layerMesoFreq}</span>
               </div>
-              <h4 className="font-bold text-sm text-slate-900 mb-1">Ciclos de Liquidez</h4>
+              <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.layerMesoHeader}</h4>
               <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                Isola ruído intra-semana e estabelece canais de tendência intermediária e suporte on-chain.
+                {tt.layerMesoDesc}
               </p>
               <div className="bg-white p-2 rounded border border-slate-200 text-[11px] text-slate-600 font-mono">
-                581 semanas agregadas
+                {tt.layerMesoContext}
               </div>
             </div>
 
             {/* Camada Macro */}
             <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">Camada Macro (1M)</span>
-                <span className="text-xs font-semibold text-slate-500">Âncora Secular</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800">{tt.layerMacroTitle}</span>
+                <span className="text-xs font-semibold text-slate-500">{tt.layerMacroFreq}</span>
               </div>
-              <h4 className="font-bold text-sm text-slate-900 mb-1">Lei de Metcalfe & Fundamentos</h4>
+              <h4 className="font-bold text-sm text-slate-900 mb-1">{tt.layerMacroHeader}</h4>
               <p className="text-xs text-slate-600 leading-relaxed mb-3">
-                Projeção do canal logarítmico secular, taxas de crescimento de TVL e queima acumulada.
+                {tt.layerMacroDesc}
               </p>
               <div className="bg-white p-2 rounded border border-slate-200 text-[11px] text-slate-600 font-mono">
-                134 meses históricos
+                {tt.layerMacroContext}
               </div>
             </div>
           </div>
 
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 text-center text-xs text-slate-800 font-medium flex items-center justify-center gap-2">
             <GitCompare className="w-4 h-4 text-blue-600" />
-            <span><strong>Reconciliação Hierárquica MinT:</strong> As 3 projeções são ajustadas linearmente para garantir consistência aditiva perfeita e eliminar alucinações de IA.</span>
+            <span>{tt.mintReconciliationText}</span>
           </div>
         </div>
       )}

@@ -23,22 +23,26 @@ export default function InteractiveSimulator({
   defaultAssumptions,
   currentPrice = 2484,
   valuationResults,
-  onResetAll
+  onResetAll,
+  t,
+  lang = 'pt'
 }) {
+  const ts = t?.simulator || {};
+
   // Presets prontos inspirados no ethval.com
   const presets = [
     {
       id: 'baseline',
-      name: 'Baseline Atual (2026)',
-      tag: 'Equilíbrio On-Chain',
+      name: ts.presets?.[0]?.name || 'Baseline Atual (2026)',
+      tag: ts.presets?.[0]?.tag || 'Equilíbrio On-Chain',
       icon: Compass,
       color: 'blue',
       values: { ...defaultAssumptions }
     },
     {
       id: 'surge',
-      name: 'The Surge & Hiper-L2',
-      tag: 'Blobs Cheios + 850 TPS',
+      name: ts.presets?.[1]?.name || 'The Surge & Hiper-L2',
+      tag: ts.presets?.[1]?.tag || 'Blobs Cheios + 850 TPS',
       icon: Zap,
       color: 'indigo',
       values: {
@@ -52,8 +56,8 @@ export default function InteractiveSimulator({
     },
     {
       id: 'ultrasound',
-      name: 'Choque de Oferta Ultra Sound',
-      tag: '40% Staked + Alta Queima',
+      name: ts.presets?.[2]?.name || 'Choque de Oferta Ultra Sound',
+      tag: ts.presets?.[2]?.tag || '40% Staked + Alta Queima',
       icon: Flame,
       color: 'emerald',
       values: {
@@ -67,8 +71,8 @@ export default function InteractiveSimulator({
     },
     {
       id: 'bear',
-      name: 'Estresse Macro / Floor Test',
-      tag: 'Desaceleração de Taxas',
+      name: ts.presets?.[3]?.name || 'Estresse Macro / Floor Test',
+      tag: ts.presets?.[3]?.tag || 'Desaceleração de Taxas',
       icon: ShieldAlert,
       color: 'amber',
       values: {
@@ -110,14 +114,14 @@ export default function InteractiveSimulator({
               <Sliders className="w-4 h-4" />
             </span>
             <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-              Simulador Interativo de Premissas & Valuation (Estilo ETHval)
+              {ts.title || "Simulador Interativo de Premissas & Valuation (Estilo ETHval)"}
             </h3>
             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-              Tempo Real
+              {ts.badge || "Tempo Real"}
             </span>
           </div>
           <p className="text-xs text-slate-500 leading-relaxed max-w-3xl">
-            Altere as variáveis fundamentais da rede Ethereum (queima de gas EIP-1559, proporção de staking, taxa de adoção de Metcalfe e throughput de L2s) para calcular instantaneamente o Preço Intrínseco Justo e observar o impacto dinâmico nas curvas projetadas no gráfico.
+            {ts.subtitle || "Altere as variáveis fundamentais da rede Ethereum (queima de gas EIP-1559, proporção de staking, taxa de adoção de Metcalfe e throughput de L2s) para calcular instantaneamente o Preço Intrínseco Justo e observar o impacto dinâmico nas curvas projetadas no gráfico."}
           </p>
         </div>
 
@@ -126,10 +130,10 @@ export default function InteractiveSimulator({
           <button
             onClick={onResetAll}
             className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
-            title="Restaura todas as variáveis para as médias observadas on-chain em 2026"
+            title={ts.restoreTitle || "Restaura todas as variáveis para as médias observadas on-chain em 2026"}
           >
             <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-            Restaurar Premissas Padrão
+            {ts.restore || "Restaurar Premissas Padrão"}
           </button>
         </div>
       </div>
@@ -138,7 +142,7 @@ export default function InteractiveSimulator({
       <div className="py-3.5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
         <span className="font-semibold text-slate-600 flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-blue-600" />
-          Cenários Prontos com 1 Clique:
+          {ts.presetsTitle || "Cenários Prontos com 1 Clique:"}
         </span>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -175,7 +179,7 @@ export default function InteractiveSimulator({
         {/* Cotação de Mercado */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
           <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider">
-            Cotação Atual de Mercado
+            {ts.marketSpot || "Cotação Atual de Mercado"}
           </span>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-2xl font-bold text-slate-900 font-mono">
@@ -184,7 +188,7 @@ export default function InteractiveSimulator({
             <span className="text-xs text-slate-600 font-medium">Spot USD</span>
           </div>
           <p className="text-[11px] text-slate-600 mt-1">
-            Preço nominal negociado nas exchanges
+            {ts.spotSub || "Preço nominal negociado nas exchanges"}
           </p>
         </div>
 
@@ -192,12 +196,12 @@ export default function InteractiveSimulator({
         <div className="bg-white p-3.5 rounded-xl border border-blue-200 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold text-blue-700 tracking-wider">
-              Preço Justo Intrínseco Simulado
+              {ts.intrinsicFairValue || "Preço Justo Intrínseco Simulado"}
             </span>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full font-mono ${
               isUndervalued ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
             }`}>
-              {isUndervalued ? `+${priceDiffPct}% Desconto` : `${priceDiffPct}% Ágio`}
+              {isUndervalued ? `+${priceDiffPct}% ${ts.discountBadge || 'Desconto'}` : `${priceDiffPct}% ${ts.premiumBadge || 'Ágio'}`}
             </span>
           </div>
           <div className="flex items-baseline gap-2 mt-1">
@@ -210,7 +214,7 @@ export default function InteractiveSimulator({
           </div>
           <p className="text-[11px] text-slate-600 mt-1">
             {isUndervalued 
-              ? 'Margem de segurança positiva com base nas premissas simuladas'
+              ? (ts.intrinsicSub || 'Margem de segurança positiva com base nas premissas simuladas')
               : 'Preço de mercado operando acima do valor intrínseco fundamental'}
           </p>
         </div>
@@ -218,30 +222,30 @@ export default function InteractiveSimulator({
         {/* Decomposição do Valor por Ação / Token */}
         <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
           <span className="text-[10px] uppercase font-bold text-slate-600 tracking-wider">
-            Decomposição de Valor (Triple Point Asset)
+            {ts.triplePointTitle || "Decomposição de Valor (Triple Point Asset)"}
           </span>
           <div className="grid grid-cols-3 gap-1.5 mt-2 text-center">
             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-              <p className="text-[9px] text-slate-600 font-semibold uppercase">Capital (PoS)</p>
+              <p className="text-[9px] text-slate-600 font-semibold uppercase">{ts.capitalPoS || "Capital (PoS)"}</p>
               <p className="text-xs font-bold text-indigo-700 font-mono mt-0.5">
                 ${valuationResults?.capitalAssetVal || 1120}
               </p>
             </div>
             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-              <p className="text-[9px] text-slate-600 font-semibold uppercase">Queima (EIP-1559)</p>
+              <p className="text-[9px] text-slate-600 font-semibold uppercase">{ts.burnConsumable || "Queima (EIP-1559)"}</p>
               <p className="text-xs font-bold text-amber-700 font-mono mt-0.5">
                 ${valuationResults?.consumableAssetVal || 980}
               </p>
             </div>
             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
-              <p className="text-[9px] text-slate-600 font-semibold uppercase">Reserva / Metcalfe</p>
+              <p className="text-[9px] text-slate-600 font-semibold uppercase">{ts.storeMetcalfe || "Reserva / Metcalfe"}</p>
               <p className="text-xs font-bold text-blue-700 font-mono mt-0.5">
                 ${valuationResults?.storeOfValueVal || 1344}
               </p>
             </div>
           </div>
           <div className="text-[10px] text-slate-600 text-center mt-1">
-            Soma dos componentes fundamentais do Ethereum
+            {ts.triplePointSub || "Soma dos componentes fundamentais do Ethereum"}
           </div>
         </div>
 
@@ -255,7 +259,7 @@ export default function InteractiveSimulator({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-800 flex items-center gap-1.5">
               <Flame className="w-3.5 h-3.5 text-amber-600" />
-              Queima Diária EIP-1559
+              {ts.sliderBurn || "Queima Diária EIP-1559"}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
@@ -282,11 +286,11 @@ export default function InteractiveSimulator({
             className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
           <div className="flex justify-between text-[10px] text-slate-600">
-            <span>100 (Atividade baixa)</span>
+            <span>{ts.sliderBurnLow || "100 (Atividade baixa)"}</span>
             <span className="font-semibold text-slate-600">
-              ~{Math.round((assumptions.burnRateEthDay * 365) / 1000)}k ETH/ano destruídos
+              ~{Math.round((assumptions.burnRateEthDay * 365) / 1000)}k ETH/ano
             </span>
-            <span>2.500 (Bull market)</span>
+            <span>{ts.sliderBurnHigh || "2.500 (Bull market)"}</span>
           </div>
         </div>
 
@@ -295,7 +299,7 @@ export default function InteractiveSimulator({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-800 flex items-center gap-1.5">
               <Vault className="w-3.5 h-3.5 text-indigo-600" />
-              Proporção em Staking (PoS)
+              {ts.sliderStaking || "Proporção em Staking (PoS)"}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
@@ -322,11 +326,11 @@ export default function InteractiveSimulator({
             className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
           <div className="flex justify-between text-[10px] text-slate-600">
-            <span>15% (Float alto)</span>
+            <span>{ts.sliderStakingLow || "15% (Float alto)"}</span>
             <span className="font-semibold text-slate-600">
-              ~{((assumptions.stakingRatioPct * 120.4) / 100).toFixed(1)}M ETH travados
+              ~{((assumptions.stakingRatioPct * 120.4) / 100).toFixed(1)}M ETH
             </span>
-            <span>48% (Choque severo)</span>
+            <span>{ts.sliderStakingHigh || "48% (Choque severo)"}</span>
           </div>
         </div>
 
@@ -335,7 +339,7 @@ export default function InteractiveSimulator({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-800 flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5 text-sky-600" />
-              Throughput de L2s (The Surge)
+              {ts.sliderL2Tps || "Throughput de L2s (The Surge)"}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
@@ -362,11 +366,11 @@ export default function InteractiveSimulator({
             className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
           <div className="flex justify-between text-[10px] text-slate-600">
-            <span>50 tx/s (Pré-blobs)</span>
+            <span>{ts.sliderL2TpsLow || "50 tx/s (Pré-blobs)"}</span>
             <span className="font-semibold text-slate-600">
-              {(assumptions.l2Tps / 12.5).toFixed(1)}x vs L1 base
+              {(assumptions.l2Tps / 12.5).toFixed(1)}x vs L1
             </span>
-            <span>1.500 tx/s (PeerDAS)</span>
+            <span>{ts.sliderL2TpsHigh || "1.500 tx/s (PeerDAS)"}</span>
           </div>
         </div>
 
@@ -375,7 +379,7 @@ export default function InteractiveSimulator({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-800 flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-purple-600" />
-              Efeito de Rede de Metcalfe (β)
+              {ts.sliderMetcalfe || "Efeito de Rede de Metcalfe (β)"}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
@@ -402,9 +406,9 @@ export default function InteractiveSimulator({
             className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
           <div className="flex justify-between text-[10px] text-slate-600">
-            <span>1.60 (Sub-linear)</span>
-            <span className="font-semibold text-slate-600">Regressão Secular 2015-2026</span>
-            <span>2.40 (Hiper-adoção)</span>
+            <span>{ts.sliderMetcalfeLow || "1.60 (Sub-linear)"}</span>
+            <span className="font-semibold text-slate-600">2015-2026</span>
+            <span>{ts.sliderMetcalfeHigh || "2.40 (Hiper-adoção)"}</span>
           </div>
         </div>
 
@@ -413,7 +417,7 @@ export default function InteractiveSimulator({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-800 flex items-center gap-1.5">
               <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-              Múltiplo de Fluxo de Caixa (P/E)
+              {ts.sliderPe || "Múltiplo de Fluxo de Caixa (P/E)"}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
@@ -440,9 +444,9 @@ export default function InteractiveSimulator({
             className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
           <div className="flex justify-between text-[10px] text-slate-600">
-            <span>12x (Valor tradicional)</span>
-            <span className="font-semibold text-slate-600">Tech / Software Growth</span>
-            <span>45x (Prêmio de escassez)</span>
+            <span>{ts.sliderPeLow || "12x (Valor tradicional)"}</span>
+            <span className="font-semibold text-slate-600">Growth</span>
+            <span>{ts.sliderPeHigh || "45x (Prêmio de escassez)"}</span>
           </div>
         </div>
 
@@ -451,7 +455,7 @@ export default function InteractiveSimulator({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-800 flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5 text-rose-600" />
-              Taxa de Desconto / Risco Macro
+              {ts.sliderDiscount || "Taxa de Desconto / Risco Macro"}
             </span>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 text-xs">
@@ -478,9 +482,9 @@ export default function InteractiveSimulator({
             className="w-full accent-blue-600 cursor-pointer h-1.5 bg-slate-200 rounded-lg"
           />
           <div className="flex justify-between text-[10px] text-slate-600">
-            <span>4.0% (Juros baixos)</span>
-            <span className="font-semibold text-slate-600">Custo de capital institucional</span>
-            <span>14.0% (Stress / Liquidez restrita)</span>
+            <span>{ts.sliderDiscountLow || "4.0% (Juros baixos)"}</span>
+            <span className="font-semibold text-slate-600">WACC</span>
+            <span>{ts.sliderDiscountHigh || "14.0% (Stress macro)"}</span>
           </div>
         </div>
 
@@ -491,32 +495,32 @@ export default function InteractiveSimulator({
         <div className="flex items-center justify-between mb-3 text-xs">
           <span className="font-bold text-slate-800 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-600" />
-            Impacto Imediato nas Metas Projetadas pelo TimesFM 3.0:
+            {ts.impactTitle || "Impacto Imediato nas Metas Projetadas pelo TimesFM 3.0:"}
           </span>
           <span className="text-[11px] text-slate-600 font-medium">
-            Projeção recalibrada pelo vetor fundamental
+            {ts.impactSub || "Projeção recalibrada pelo vetor fundamental"}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
           {[
             {
-              horizon: '30 Dias',
+              horizon: ts.horizon30 || '30 Dias',
               target: Math.round(fairValue * 0.88),
               pct: Math.round(((fairValue * 0.88 - currentPrice) / currentPrice) * 100),
-              detail: 'Reação de liquidez de curto prazo'
+              detail: ts.impact30Detail || 'P50 (30D)'
             },
             {
-              horizon: '180 Dias (6M)',
+              horizon: ts.horizon180 || '180 Dias (6M)',
               target: Math.round(fairValue * 0.96),
               pct: Math.round(((fairValue * 0.96 - currentPrice) / currentPrice) * 100),
-              detail: 'Convergência semestral ao valor justo'
+              detail: ts.impact180Detail || 'P50 (180D)'
             },
             {
-              horizon: '365 Dias (1 Ano)',
+              horizon: ts.horizon365 || '365 Dias (1 Ano)',
               target: Math.round(fairValue * 1.08),
               pct: Math.round(((fairValue * 1.08 - currentPrice) / currentPrice) * 100),
-              detail: 'Expansão de ciclo e queima acumulada'
+              detail: ts.impact365Detail || 'P50 (365D)'
             }
           ].map((item, idx) => (
             <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between">
