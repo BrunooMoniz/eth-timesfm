@@ -19,7 +19,11 @@ import {
   Landmark,
   Clock,
   Eye,
-  ChevronRight
+  ChevronRight,
+  ZoomIn,
+  ZoomOut,
+  Maximize2,
+  RotateCcw
 } from 'lucide-react';
 
 const ETH_MILESTONES = [
@@ -67,6 +71,24 @@ export default function ForecastChart({
   const [activeMilestone, setActiveMilestone] = useState(null);
   const [showMilestones, setShowMilestones] = useState(true);
 
+  // Manipulador inteligente de Range que ajusta resolução conforme solicitado pelo usuário
+  const handleRangeChange = (newRange) => {
+    setSelectedRange(newRange);
+    if (newRange === 'all') {
+      // Quando seleciona período completo (2015-2026), alterna para Semanal (1W) e Log para visualização perfeita
+      setSelectedTimeframe('1w');
+      setScaleMode('log');
+    } else if (newRange === '5y') {
+      setSelectedTimeframe('1w');
+      setScaleMode('log');
+    } else if (newRange === '3y') {
+      setSelectedTimeframe('1w');
+    } else if (newRange === '30d' || newRange === '90d') {
+      setSelectedTimeframe('1d');
+      setScaleMode('normal');
+    }
+  };
+
   // Seleciona o conjunto de dados histórico baseado no range e timeframe escolhidos
   const activeHistoricalData = useMemo(() => {
     let source = fullHistoryDaily.length > 0 ? fullHistoryDaily : marketHistory;
@@ -76,27 +98,45 @@ export default function ForecastChart({
       source = monthlyHistory;
     }
 
+    if (selectedRange === 'all') return source;
+
+    if (selectedTimeframe === '1m') {
+      if (selectedRange === '30d') return source.slice(-2);
+      if (selectedRange === '90d') return source.slice(-3);
+      if (selectedRange === '180d') return source.slice(-6);
+      if (selectedRange === '1y') return source.slice(-12);
+      if (selectedRange === '3y') return source.slice(-36);
+      if (selectedRange === '5y') return source.slice(-60);
+      return source;
+    }
+
+    if (selectedTimeframe === '1w') {
+      if (selectedRange === '30d') return source.slice(-5);
+      if (selectedRange === '90d') return source.slice(-13);
+      if (selectedRange === '180d') return source.slice(-26);
+      if (selectedRange === '1y') return source.slice(-52);
+      if (selectedRange === '3y') return source.slice(-156);
+      if (selectedRange === '5y') return source.slice(-260);
+      return source;
+    }
+
+    // 1d (diário)
     if (selectedRange === '30d') return source.slice(-30);
     if (selectedRange === '90d') return source.slice(-90);
     if (selectedRange === '180d') return source.slice(-180);
     if (selectedRange === '1y') return source.slice(-365);
-    if (selectedRange === '3y') return source.slice(-Math.min(source.length, 3 * 365));
-    if (selectedRange === '5y') return source.slice(-Math.min(source.length, 5 * 365));
-    // 'all': histórico total desde o Gênesis 2015
+    if (selectedRange === '3y') return source.slice(-1095);
+    if (selectedRange === '5y') return source.slice(-1825);
     return source;
   }, [selectedRange, selectedTimeframe, fullHistoryDaily, marketHistory, weeklyHistory, monthlyHistory]);
 
-  // Canal secular correspondente à janela selecionada
+  // Canal secular rigorosamente alinhado com as datas do conjunto ativo para não sobrecarregar o eixo temporal
   const activeChannel = useMemo(() => {
     const full = channelHistoryFull.length > 0 ? channelHistoryFull : channelHistory;
-    if (selectedRange === '30d') return full.slice(-30);
-    if (selectedRange === '90d') return full.slice(-90);
-    if (selectedRange === '180d') return full.slice(-180);
-    if (selectedRange === '1y') return full.slice(-365);
-    if (selectedRange === '3y') return full.slice(-Math.min(full.length, 3 * 365));
-    if (selectedRange === '5y') return full.slice(-Math.min(full.length, 5 * 365));
-    return full;
-  }, [selectedRange, channelHistory, channelHistoryFull]);
+    if (!full || full.length === 0 || activeHistoricalData.length === 0) return [];
+    const dateSet = new Set(activeHistoricalData.map(d => d.time));
+    return full.filter(p => dateSet.has(p.time));
+  }, [activeHistoricalData, channelHistory, channelHistoryFull]);
 
   // Obtém as projeções ativas de acordo com o cenário selecionado
   const activeForecasts = useMemo(() => {
@@ -107,6 +147,51 @@ export default function ForecastChart({
   }, [scenarios, selectedScenario, forecasts]);
 
   const currentForecast = activeForecasts[selectedHorizon] || null;
+
+  // Amostragem das projeções para manter o mesmo passo temporal do gráfico (evita distorção em 1W/1M)
+  const activeProjectionPoints = useMemo(() => {
+    if (!currentForecast?.points || currentForecast.points.length === 0) return [];
+    const pts = currentForecast.points;
+    if (selectedTimeframe === '1w') {
+      return pts.filter((_, idx) => (idx + 1) % 7 === 0 || idx === pts.length - 1);
+    }
+    if (selectedTimeframe === '1m') {
+      return pts.filter((_, idx) => (idx + 1) % 30 === 0 || idx === pts.length - 1);
+    }
+    return pts;
+  }, [currentForecast, selectedTimeframe]);
+
+  // Funções interativas de controle de zoom e posicionamento do gráfico via LogicalRange nativo
+  const handleZoomIn = () => {
+    if (!chartInstance.current) return;
+    const ts = chartInstance.current.timeScale();
+    const range = ts.getVisibleLogicalRange();
+    if (!range) return;
+    const span = range.to - range.from;
+    if (span <= 6) return;
+    const delta = span * 0.15;
+    ts.setVisibleLogicalRange({ from: range.from + delta, to: range.to - delta });
+  };
+
+  const handleZoomOut = () => {
+    if (!chartInstance.current) return;
+    const ts = chartInstance.current.timeScale();
+    const range = ts.getVisibleLogicalRange();
+    if (!range) return;
+    const span = range.to - range.from;
+    const delta = Math.max(2, span * 0.25);
+    ts.setVisibleLogicalRange({ from: range.from - delta, to: range.to + delta });
+  };
+
+  const handleFitContent = () => {
+    if (!chartInstance.current) return;
+    chartInstance.current.timeScale().fitContent();
+  };
+
+  const handleScrollToEnd = () => {
+    if (!chartInstance.current) return;
+    chartInstance.current.timeScale().scrollToRealTime();
+  };
 
   useEffect(() => {
     if (!chartContainerRef.current || activeHistoricalData.length === 0) return;
@@ -155,6 +240,24 @@ export default function ForecastChart({
         borderColor: '#e2e8f0',
         timeVisible: true,
         secondsVisible: false,
+        rightOffset: 12,
+        barSpacing: selectedRange === 'all' 
+          ? (selectedTimeframe === '1m' ? 8 : selectedTimeframe === '1w' ? 4 : 2) 
+          : (selectedTimeframe === '1m' ? 14 : selectedTimeframe === '1w' ? 8 : 5),
+        minBarSpacing: 0.04, // Permite diminuir o zoom ao máximo sem travar
+        fixLeftEdge: false,
+        fixRightEdge: false,
+      },
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        axisPressedMouseMove: true,
+        mouseWheel: true,
+        pinch: true,
       },
     });
 
@@ -231,13 +334,13 @@ export default function ForecastChart({
       const recentHist = activeHistoricalData.slice(-sliceCount);
       const simData = [
         ...recentHist.map(p => ({ time: p.time, value: simulatedFairValue })),
-        ...(currentForecast?.points || []).map(p => ({ time: p.time, value: simulatedFairValue }))
+        ...(activeProjectionPoints || []).map(p => ({ time: p.time, value: simulatedFairValue }))
       ];
       simFairSeries.setData(simData);
     }
 
-    // 2. Plotar projeções do TimesFM 3.0
-    if (currentForecast && currentForecast.points && currentForecast.points.length > 0) {
+    // 2. Plotar projeções do TimesFM 3.0 alinhadas temporalmente
+    if (currentForecast && activeProjectionPoints.length > 0) {
       const lastHistorical = activeHistoricalData[activeHistoricalData.length - 1];
 
       // Renderização das Bandas Estocásticas / Fan Chart em Azul Translúcido
@@ -252,7 +355,7 @@ export default function ForecastChart({
         });
         areaUpperP90.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p90 }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p90 }))
         ]);
 
         const areaLowerP10 = chart.addSeries(AreaSeries, {
@@ -264,7 +367,7 @@ export default function ForecastChart({
         });
         areaLowerP10.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p10 }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p10 }))
         ]);
 
         // Camada 2: Banda 60% (P20 - P80)
@@ -277,7 +380,7 @@ export default function ForecastChart({
         });
         areaUpperP80.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p80 ?? pt.p75 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p80 ?? pt.p75 ?? pt.median }))
         ]);
 
         const areaLowerP20 = chart.addSeries(AreaSeries, {
@@ -289,7 +392,7 @@ export default function ForecastChart({
         });
         areaLowerP20.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p20 ?? pt.p25 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p20 ?? pt.p25 ?? pt.median }))
         ]);
 
         // Camada 3: Banda 40% (P30 - P70)
@@ -302,7 +405,7 @@ export default function ForecastChart({
         });
         areaUpperP70.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p70 ?? pt.p75 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p70 ?? pt.p75 ?? pt.median }))
         ]);
 
         const areaLowerP30 = chart.addSeries(AreaSeries, {
@@ -314,7 +417,7 @@ export default function ForecastChart({
         });
         areaLowerP30.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p30 ?? pt.p25 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p30 ?? pt.p25 ?? pt.median }))
         ]);
       } else if (bandMode === 'p10_p90') {
         const areaUpperP90 = chart.addSeries(AreaSeries, {
@@ -326,7 +429,7 @@ export default function ForecastChart({
         });
         areaUpperP90.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p90 }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p90 }))
         ]);
 
         const areaLowerP10 = chart.addSeries(AreaSeries, {
@@ -338,7 +441,7 @@ export default function ForecastChart({
         });
         areaLowerP10.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p10 }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p10 }))
         ]);
       } else if (bandMode === 'p20_p80') {
         const areaUpperP80 = chart.addSeries(AreaSeries, {
@@ -350,7 +453,7 @@ export default function ForecastChart({
         });
         areaUpperP80.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p80 ?? pt.p75 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p80 ?? pt.p75 ?? pt.median }))
         ]);
 
         const areaLowerP20 = chart.addSeries(AreaSeries, {
@@ -362,7 +465,7 @@ export default function ForecastChart({
         });
         areaLowerP20.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p20 ?? pt.p25 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p20 ?? pt.p25 ?? pt.median }))
         ]);
       } else if (bandMode === 'p30_p70') {
         const areaUpperP70 = chart.addSeries(AreaSeries, {
@@ -374,7 +477,7 @@ export default function ForecastChart({
         });
         areaUpperP70.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p70 ?? pt.p75 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p70 ?? pt.p75 ?? pt.median }))
         ]);
 
         const areaLowerP30 = chart.addSeries(AreaSeries, {
@@ -386,7 +489,7 @@ export default function ForecastChart({
         });
         areaLowerP30.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
-          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p30 ?? pt.p25 ?? pt.median }))
+          ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.p30 ?? pt.p25 ?? pt.median }))
         ]);
       }
 
@@ -398,7 +501,7 @@ export default function ForecastChart({
       });
       const medianData = [
         { time: lastHistorical.time, value: lastHistorical.close },
-        ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.median }))
+        ...activeProjectionPoints.map(pt => ({ time: pt.time, value: pt.median }))
       ];
       medianSeries.setData(medianData);
     }
@@ -421,7 +524,7 @@ export default function ForecastChart({
         chartInstance.current = null;
       }
     };
-  }, [activeHistoricalData, currentForecast, chartType, scaleMode, bandMode, showSecularChannel, activeChannel, simulatedFairValue]);
+  }, [activeHistoricalData, currentForecast, activeProjectionPoints, chartType, scaleMode, bandMode, showSecularChannel, activeChannel, simulatedFairValue, selectedTimeframe, selectedRange]);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
@@ -591,12 +694,7 @@ export default function ForecastChart({
           ].map(r => (
             <button
               key={r.id}
-              onClick={() => {
-                setSelectedRange(r.id);
-                if (r.id === 'all' || r.id === '5y') {
-                  setScaleMode('log');
-                }
-              }}
+              onClick={() => handleRangeChange(r.id)}
               className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer text-xs ${
                 selectedRange === r.id
                   ? 'bg-blue-600 text-white shadow-xs'
@@ -633,6 +731,41 @@ export default function ForecastChart({
         </div>
 
       </div>
+
+      {/* Banner Informativo Inteligente de Resolução para Período Completo */}
+      {selectedRange === 'all' && (
+        <div className="mt-2.5 px-3.5 py-2 bg-gradient-to-r from-blue-50 via-sky-50/50 to-indigo-50/40 border border-blue-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+          <div className="flex items-center gap-2 text-blue-900 font-medium">
+            <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
+            <span>
+              {tf.autoWeeklyNotice || 'Resolução Semanal (1W) ativada automaticamente para visualização otimizada de todo o histórico.'}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Resolução:</span>
+            <button
+              onClick={() => setSelectedTimeframe('1w')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition border ${
+                selectedTimeframe === '1w'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              1W Semanal
+            </button>
+            <button
+              onClick={() => setSelectedTimeframe('1m')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold cursor-pointer transition border ${
+                selectedTimeframe === '1m'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              1M Mensal
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Régua de Marcos Históricos da Rede Ethereum (Milestones) */}
       <div className="py-2.5 border-b border-slate-100">
@@ -844,6 +977,42 @@ export default function ForecastChart({
               {tf.logScale || 'Escala Log'}
             </span>
           )}
+        </div>
+
+        {/* Barra Flutuante de Controle de Zoom e Enquadramento */}
+        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md border border-slate-200 px-1.5 py-1 rounded-lg text-xs flex items-center gap-1 shadow-sm z-10">
+          <button
+            onClick={handleFitContent}
+            title={tf.fitView || "Enquadrar Todo o Gráfico"}
+            className="px-2 py-1 hover:bg-slate-100 text-slate-700 hover:text-blue-600 rounded-md cursor-pointer transition flex items-center gap-1 text-[11px] font-semibold"
+          >
+            <Maximize2 className="w-3.5 h-3.5 text-blue-600" />
+            <span className="hidden sm:inline">{tf.fitView || "Enquadrar"}</span>
+          </button>
+          <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
+          <button
+            onClick={handleZoomOut}
+            title={tf.zoomOut || "Afastar (-)"}
+            className="p-1.5 hover:bg-slate-100 text-slate-700 hover:text-blue-600 rounded-md cursor-pointer transition"
+          >
+            <ZoomOut className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={handleZoomIn}
+            title={tf.zoomIn || "Aproximar (+)"}
+            className="p-1.5 hover:bg-slate-100 text-slate-700 hover:text-blue-600 rounded-md cursor-pointer transition"
+          >
+            <ZoomIn className="w-3.5 h-3.5" />
+          </button>
+          <div className="w-px h-4 bg-slate-200 mx-0.5"></div>
+          <button
+            onClick={handleScrollToEnd}
+            title={tf.scrollToEnd || "Ir para Hoje / Projeção"}
+            className="px-2 py-1 hover:bg-slate-100 text-slate-700 hover:text-blue-600 rounded-md cursor-pointer transition flex items-center gap-1 text-[11px] font-medium"
+          >
+            <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden md:inline">{tf.scrollToEnd || "Hoje"}</span>
+          </button>
         </div>
       </div>
 
