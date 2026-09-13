@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import ForecastChart from './components/ForecastChart';
+import TpsRoadmapChart from './components/TpsRoadmapChart';
 import SuperAssetSection from './components/SuperAssetSection';
 import WorldComputerSection from './components/WorldComputerSection';
 import ModelMethodology from './components/ModelMethodology';
@@ -85,7 +86,7 @@ export default function App() {
     );
   }
 
-  const { market_history, full_history_daily, weekly_history, monthly_history, forecasts, weekly_forecast, fundamentals, generated_at } = data;
+  const { market_history, full_history_daily, weekly_history, monthly_history, forecasts, weekly_forecast, fundamentals, tps_roadmap_data, generated_at } = data;
   const historySeries = full_history_daily && full_history_daily.length > 0 ? full_history_daily : (market_history || []);
   const currentPrice = historySeries.length > 0 ? historySeries[historySeries.length - 1].close : null;
   const prevPrice = historySeries.length > 1 ? historySeries[historySeries.length - 2].close : null;
@@ -118,6 +119,11 @@ export default function App() {
           forecasts={forecasts || {}}
           weeklyForecast={weekly_forecast || []}
           indicatorsForecast={data.indicators_forecast || {}}
+        />
+
+        {/* Gráfico Dedicado de Throughput (TPS) & Roadmap de Escalabilidade */}
+        <TpsRoadmapChart 
+          tpsRoadmapData={tps_roadmap_data}
         />
 
         {/* Seção 1: O Ethereum como Super Asset (Triple Point Asset) */}

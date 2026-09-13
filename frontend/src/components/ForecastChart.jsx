@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { createChart, ColorType, LineSeries, CandlestickSeries, AreaSeries } from 'lightweight-charts';
-import { Layers, Eye, Flame, Vault, Cpu, GitMerge, CheckCircle2 } from 'lucide-react';
+import { createChart, ColorType, LineSeries, CandlestickSeries, AreaSeries, PriceScaleMode } from 'lightweight-charts';
+import { Layers, Flame, Vault, Cpu, GitMerge, CheckCircle2, Sliders } from 'lucide-react';
 
 export default function ForecastChart({
   marketHistory = [],
@@ -14,10 +14,11 @@ export default function ForecastChart({
   const chartInstance = useRef(null);
 
   // Estados de controle
-  const [selectedHorizon, setSelectedHorizon] = useState('30d'); // '7d' | '30d' | '90d'
+  const [selectedHorizon, setSelectedHorizon] = useState('30d'); // '7d' | '30d' | '90d' | '180d' | '365d'
   const [selectedTimeframe, setSelectedTimeframe] = useState('1d'); // '1d' | '1w' | '1m' | 'all'
   const [chartType, setChartType] = useState('candles'); // 'candles' | 'line'
-  const [showP10P90, setShowP10P90] = useState(true);
+  const [scaleMode, setScaleMode] = useState('normal'); // 'normal' | 'log'
+  const [bandMode, setBandMode] = useState('fan'); // 'p10_p90' | 'p20_p80' | 'p30_p70' | 'fan' | 'none'
 
   // Seleciona o conjunto de dados histórico baseado no timeframe escolhido
   const activeHistoricalData = useMemo(() => {
@@ -47,7 +48,7 @@ export default function ForecastChart({
     const container = chartContainerRef.current;
     const chart = createChart(container, {
       width: container.clientWidth,
-      height: 500,
+      height: 520,
       layout: {
         background: { type: ColorType.Solid, color: '#ffffff' },
         textColor: '#64748b',
@@ -72,6 +73,7 @@ export default function ForecastChart({
         },
       },
       rightPriceScale: {
+        mode: scaleMode === 'log' ? PriceScaleMode.Logarithmic : PriceScaleMode.Normal,
         borderColor: '#e2e8f0',
         scaleMargins: {
           top: 0.1,
@@ -120,8 +122,83 @@ export default function ForecastChart({
     if (currentForecast && currentForecast.points && currentForecast.points.length > 0) {
       const lastHistorical = activeHistoricalData[activeHistoricalData.length - 1];
 
-      // Banda Ampla P10 - P90 em azul translúcido (#2563eb / 0.12)
-      if (showP10P90) {
+      // Renderização das Bandas Estocásticas / Fan Chart em Azul Translúcido
+      if (bandMode === 'fan') {
+        // Camada 1: Banda 80% (P10 - P90)
+        const areaUpperP90 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.08)',
+          bottomColor: 'rgba(37, 99, 235, 0.01)',
+          lineColor: 'rgba(37, 99, 235, 0.25)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        areaUpperP90.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p90 }))
+        ]);
+
+        const areaLowerP10 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.04)',
+          bottomColor: 'rgba(37, 99, 235, 0.01)',
+          lineColor: 'rgba(37, 99, 235, 0.25)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        areaLowerP10.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p10 }))
+        ]);
+
+        // Camada 2: Banda 60% (P20 - P80)
+        const areaUpperP80 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.12)',
+          bottomColor: 'rgba(37, 99, 235, 0.02)',
+          lineColor: 'rgba(37, 99, 235, 0.35)',
+          lineWidth: 1,
+          lineStyle: 1,
+        });
+        areaUpperP80.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p80 ?? pt.p75 ?? pt.median }))
+        ]);
+
+        const areaLowerP20 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.06)',
+          bottomColor: 'rgba(37, 99, 235, 0.02)',
+          lineColor: 'rgba(37, 99, 235, 0.35)',
+          lineWidth: 1,
+          lineStyle: 1,
+        });
+        areaLowerP20.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p20 ?? pt.p25 ?? pt.median }))
+        ]);
+
+        // Camada 3: Banda 40% (P30 - P70)
+        const areaUpperP70 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.16)',
+          bottomColor: 'rgba(37, 99, 235, 0.04)',
+          lineColor: 'rgba(37, 99, 235, 0.45)',
+          lineWidth: 1,
+          lineStyle: 0,
+        });
+        areaUpperP70.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p70 ?? pt.p75 ?? pt.median }))
+        ]);
+
+        const areaLowerP30 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.08)',
+          bottomColor: 'rgba(37, 99, 235, 0.04)',
+          lineColor: 'rgba(37, 99, 235, 0.45)',
+          lineWidth: 1,
+          lineStyle: 0,
+        });
+        areaLowerP30.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p30 ?? pt.p25 ?? pt.median }))
+        ]);
+      } else if (bandMode === 'p10_p90') {
         const areaUpperP90 = chart.addSeries(AreaSeries, {
           topColor: 'rgba(37, 99, 235, 0.14)',
           bottomColor: 'rgba(37, 99, 235, 0.02)',
@@ -129,11 +206,10 @@ export default function ForecastChart({
           lineWidth: 1,
           lineStyle: 2,
         });
-        const p90Data = [
+        areaUpperP90.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
           ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p90 }))
-        ];
-        areaUpperP90.setData(p90Data);
+        ]);
 
         const areaLowerP10 = chart.addSeries(AreaSeries, {
           topColor: 'rgba(37, 99, 235, 0.05)',
@@ -142,11 +218,58 @@ export default function ForecastChart({
           lineWidth: 1,
           lineStyle: 2,
         });
-        const p10Data = [
+        areaLowerP10.setData([
           { time: lastHistorical.time, value: lastHistorical.close },
           ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p10 }))
-        ];
-        areaLowerP10.setData(p10Data);
+        ]);
+      } else if (bandMode === 'p20_p80') {
+        const areaUpperP80 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.16)',
+          bottomColor: 'rgba(37, 99, 235, 0.03)',
+          lineColor: 'rgba(37, 99, 235, 0.4)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        areaUpperP80.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p80 ?? pt.p75 ?? pt.median }))
+        ]);
+
+        const areaLowerP20 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.07)',
+          bottomColor: 'rgba(37, 99, 235, 0.02)',
+          lineColor: 'rgba(37, 99, 235, 0.4)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        areaLowerP20.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p20 ?? pt.p25 ?? pt.median }))
+        ]);
+      } else if (bandMode === 'p30_p70') {
+        const areaUpperP70 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.18)',
+          bottomColor: 'rgba(37, 99, 235, 0.04)',
+          lineColor: 'rgba(37, 99, 235, 0.45)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        areaUpperP70.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p70 ?? pt.p75 ?? pt.median }))
+        ]);
+
+        const areaLowerP30 = chart.addSeries(AreaSeries, {
+          topColor: 'rgba(37, 99, 235, 0.09)',
+          bottomColor: 'rgba(37, 99, 235, 0.03)',
+          lineColor: 'rgba(37, 99, 235, 0.45)',
+          lineWidth: 1,
+          lineStyle: 2,
+        });
+        areaLowerP30.setData([
+          { time: lastHistorical.time, value: lastHistorical.close },
+          ...currentForecast.points.map(pt => ({ time: pt.time, value: pt.p30 ?? pt.p25 ?? pt.median }))
+        ]);
       }
 
       // Linha Mediana P50 do TimesFM 3.0 em azul vibrante (#2563eb) com espessura 3
@@ -180,7 +303,7 @@ export default function ForecastChart({
         chartInstance.current = null;
       }
     };
-  }, [activeHistoricalData, currentForecast, chartType, showP10P90]);
+  }, [activeHistoricalData, currentForecast, chartType, scaleMode, bandMode]);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
@@ -200,18 +323,20 @@ export default function ForecastChart({
             </span>
           </div>
 
-          {/* Seletor de Horizonte de Projeção: [7 Dias] [30 Dias] [90 Dias] */}
+          {/* Seletor de Horizonte de Projeção Estendido: [7D] [30D] [90D] [180D (6M)] [365D (1 Ano)] */}
           <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center gap-1">
             <span className="text-[10px] uppercase font-bold text-slate-600 px-2">Horizonte:</span>
             {[
-              { id: '7d', label: '7 Dias', desc: 'Tático' },
-              { id: '30d', label: '30 Dias', desc: 'Médio Prazo' },
-              { id: '90d', label: '90 Dias', desc: 'Estratégico' }
+              { id: '7d', label: '7 Dias' },
+              { id: '30d', label: '30 Dias' },
+              { id: '90d', label: '90 Dias' },
+              { id: '180d', label: '180 Dias (6M)' },
+              { id: '365d', label: '365 Dias (1 Ano)' }
             ].map(h => (
               <button
                 key={h.id}
                 onClick={() => setSelectedHorizon(h.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   selectedHorizon === h.id
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
@@ -269,20 +394,60 @@ export default function ForecastChart({
             </button>
           </div>
 
-          {/* Toggle Bandas P10-P90 */}
-          <button
-            onClick={() => setShowP10P90(!showP10P90)}
-            className={`px-2.5 py-1.5 rounded-xl border font-semibold flex items-center gap-1.5 transition cursor-pointer text-xs ${
-              showP10P90
-                ? 'bg-blue-50 border-blue-200 text-blue-700 shadow-2xs'
-                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Bandas P10–P90
-          </button>
+          {/* Alternador de Escala de Preço: [Linear] / [Log (Logarítmica)] */}
+          <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center">
+            <button
+              onClick={() => setScaleMode('normal')}
+              className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
+                scaleMode === 'normal' ? 'bg-white text-blue-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Escala Linear Convencional"
+            >
+              Linear
+            </button>
+            <button
+              onClick={() => setScaleMode('log')}
+              className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
+                scaleMode === 'log' ? 'bg-white text-blue-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Escala Logarítmica para ciclos de longo prazo"
+            >
+              Log
+            </button>
+          </div>
+
         </div>
 
+      </div>
+
+      {/* Barra Secundária de Controles de Incerteza (Fan Chart / Bandas de Quantis) */}
+      <div className="flex flex-wrap items-center justify-between gap-3 py-2.5 px-3 bg-slate-50 rounded-xl border border-slate-200/70 mt-3 text-xs">
+        <div className="flex items-center gap-2">
+          <Sliders className="w-3.5 h-3.5 text-blue-600" />
+          <span className="font-semibold text-slate-700">Bandas de Incerteza Estocástica:</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {[
+            { id: 'fan', label: 'Leque Completo (Fan Chart Multi-Camadas)', highlight: true },
+            { id: 'p10_p90', label: 'Banda 80% (P10-P90)' },
+            { id: 'p20_p80', label: 'Banda 60% (P20-P80)' },
+            { id: 'p30_p70', label: 'Banda 40% (P30-P70)' },
+            { id: 'none', label: 'Ocultar' }
+          ].map(b => (
+            <button
+              key={b.id}
+              onClick={() => setBandMode(b.id)}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer text-xs ${
+                bandMode === b.id
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              {b.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Estatísticas Rápidas do Preço */}
@@ -296,7 +461,9 @@ export default function ForecastChart({
           </div>
 
           <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-100">
-            <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Previsão Mediana (P50)</p>
+            <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">
+              Previsão Mediana (P50 - {selectedHorizon.toUpperCase()})
+            </p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="text-base font-bold text-blue-700 font-mono">
                 ${currentForecast.expected_price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -329,23 +496,34 @@ export default function ForecastChart({
 
       {/* Container do Gráfico TradingView */}
       <div className="relative mt-4">
-        <div ref={chartContainerRef} className="w-full h-[500px] rounded-xl overflow-hidden border border-slate-200/60" />
+        <div ref={chartContainerRef} className="w-full h-[520px] rounded-xl overflow-hidden border border-slate-200/60" />
         
         {/* Legenda Flutuante TradingView Light */}
-        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md border border-slate-200 px-3 py-2 rounded-lg text-xs flex items-center gap-4 pointer-events-none shadow-xs">
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md border border-slate-200 px-3 py-2 rounded-lg text-xs flex flex-wrap items-center gap-3.5 pointer-events-none shadow-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-0.5 bg-sky-600"></span>
             <span className="text-slate-700 font-medium">Histórico ({selectedTimeframe.toUpperCase()})</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-1 bg-blue-600 rounded-xs"></span>
-            <span className="text-blue-700 font-bold">TimesFM 3.0 P50 (Mediana)</span>
+            <span className="text-blue-700 font-bold">TimesFM 3.0 P50 ({selectedHorizon.toUpperCase()})</span>
           </div>
-          {showP10P90 && (
+          {bandMode === 'fan' && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-2 bg-gradient-to-t from-blue-600/40 via-blue-500/20 to-blue-400/10 border border-blue-500/50 rounded-xs"></span>
+              <span className="text-slate-600 font-medium">Fan Chart (9 Quantis em Degradê)</span>
+            </div>
+          )}
+          {bandMode !== 'fan' && bandMode !== 'none' && (
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-2 bg-blue-500/20 border border-blue-500/40 rounded-xs"></span>
-              <span className="text-slate-600 font-medium">Faixa P10–P90 (80% Incerteza)</span>
+              <span className="text-slate-600 font-medium">Faixa de Incerteza ({bandMode})</span>
             </div>
+          )}
+          {scaleMode === 'log' && (
+            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
+              Escala Log
+            </span>
           )}
         </div>
       </div>
@@ -360,13 +538,13 @@ export default function ForecastChart({
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  Reconciliação Hierárquica Multi-Timeframe
+                  Reconciliação Hierárquica Multi-Timeframe ({selectedHorizon.toUpperCase()})
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 uppercase tracking-wider">
                     {currentForecast.explanation?.direction || 'Alta Consistente'}
                   </span>
                 </h4>
                 <p className="text-xs text-slate-500">
-                  Cruzamento dinâmico entre a microestrutura diária e a âncora macro de múltiplos ciclos (2015-2026)
+                  Cruzamento dinâmico entre a microestrutura diária e a âncora macro secular (2015-2026)
                 </p>
               </div>
             </div>
@@ -400,10 +578,10 @@ export default function ForecastChart({
             <div className="bg-white/90 p-3 rounded-lg border border-blue-100 space-y-1.5 flex flex-col justify-center">
               <div className="flex items-center gap-1.5 text-blue-700 font-semibold text-xs">
                 <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
-                <span>Calibração de Alta Assertividade:</span>
+                <span>Calibração Hierárquica de Alta Assertividade:</span>
               </div>
               <p className="text-slate-600 text-[11px] leading-relaxed">
-                {currentForecast.explanation?.cross_validation || 'Ponderação hierárquica ótima eliminando ruídos de cauda e concentrando a probabilidade na tendência estrutural.'}
+                {currentForecast.explanation?.cross_validation || 'Ponderação hierárquica ótima eliminando ruídos de cauda e concentrando a probabilidade na tendência estrutural de múltiplos ciclos.'}
               </p>
             </div>
           </div>
