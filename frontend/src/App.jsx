@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
+import KnowledgePills from './components/KnowledgePills';
+import MentalModelDiagrams from './components/MentalModelDiagrams';
 import ForecastChart from './components/ForecastChart';
 import TpsRoadmapChart from './components/TpsRoadmapChart';
 import SuperAssetSection from './components/SuperAssetSection';
 import WorldComputerSection from './components/WorldComputerSection';
 import ModelMethodology from './components/ModelMethodology';
 import InteractiveSimulator from './components/InteractiveSimulator';
+import { translations } from './i18n/translations';
 import { Loader2 } from 'lucide-react';
 
 const DEFAULT_ASSUMPTIONS = {
@@ -21,7 +24,10 @@ export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lang, setLang] = useState('pt');
   const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
+
+  const t = translations[lang] || translations.pt;
 
   const loadData = React.useCallback(async () => {
     try {
@@ -157,12 +163,12 @@ export default function App() {
     methodology_framework
   } = data;
 
-  const currentTvl = fundamentals?.current_tvl_usd ? `$${(fundamentals.current_tvl_usd / 1e9).toFixed(1)}B` : '$65.0B';
+  const currentTvl = fundamentals?.current_tvl_usd ? `$${(fundamentals.current_tvl_usd / 1e9).toFixed(1)}B` : '$109.0B';
   const stakedPct = fundamentals?.triple_point_metrics?.capital_asset?.staked_pct_supply ? `${fundamentals.triple_point_metrics.capital_asset.staked_pct_supply}%` : '28.9%';
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
-      {/* Top Navbar */}
+      {/* Top Navbar com Seletor de Idiomas */}
       <Header 
         currentPrice={currentPrice}
         priceChangePct={priceChangePct}
@@ -170,11 +176,20 @@ export default function App() {
         stakedPct={stakedPct}
         lastUpdated={generated_at}
         onRefreshSuccess={loadData}
+        lang={lang}
+        setLang={setLang}
+        t={t}
       />
 
       {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
+        {/* Pílulas de Conhecimento: Modelo Mental Sem Slop */}
+        <KnowledgePills t={t} />
+
+        {/* Diagramas Visuais do Modelo Mental (Flywheel & Pipeline TimesFM) */}
+        <MentalModelDiagrams t={t} />
+
         {/* Mega Gráfico de Previsões com TimesFM 3.0, Toda a Linha Temporal e Reconciliação */}
         <ForecastChart 
           marketHistory={market_history || []}
@@ -229,7 +244,7 @@ export default function App() {
           <p>© 2026 Ethereum TimesFM • Plataforma Analítica & Projeções com IA Fundacional</p>
           <p className="flex items-center gap-1.5 font-medium">
             <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-            Dados atualizados em: <span className="text-slate-800 font-mono">{generated_at}</span>
+            {generated_at ? `Dados atualizados em: ${generated_at}` : 'Dataset sincronizado em tempo real'}
           </p>
         </div>
       </footer>

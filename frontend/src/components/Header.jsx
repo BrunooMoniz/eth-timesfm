@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
-import { Sparkles, RefreshCw, Check, Clock } from 'lucide-react';
+import { Sparkles, RefreshCw, Check, Clock, Globe } from 'lucide-react';
 
-export default function Header({ currentPrice, priceChangePct, tvlUsd, stakedPct, lastUpdated, onRefreshSuccess }) {
+export default function Header({ 
+  currentPrice, 
+  priceChangePct, 
+  tvlUsd, 
+  stakedPct, 
+  lastUpdated, 
+  onRefreshSuccess,
+  lang = 'pt',
+  setLang,
+  t
+}) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshDone, setRefreshDone] = useState(false);
 
@@ -36,7 +46,7 @@ export default function Header({ currentPrice, priceChangePct, tvlUsd, stakedPct
         
         {/* Logo & Marca */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 p-0.5 shadow-sm shadow-blue-500/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-500 p-0.5 shadow-sm shadow-blue-500/20 shrink-0">
             <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
               <svg className="w-6 h-6 text-blue-600" viewBox="0 0 784.37 1277.39" fill="currentColor">
                 <path d="M392.07 0L383.5 29.11V873.74L392.07 882.29L784.13 650.54L392.07 0Z" fillOpacity="0.85" />
@@ -50,24 +60,53 @@ export default function Header({ currentPrice, priceChangePct, tvlUsd, stakedPct
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight">Ethereum TimesFM</h1>
+              <h1 className="text-xl font-bold text-slate-900 tracking-tight">{t?.appName || "Ethereum TimesFM"}</h1>
               <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                 <Sparkles className="w-3 h-3 text-blue-600" />
-                Google TimesFM 3.0 SOTA
+                {t?.appBadge || "Google TimesFM 3.0 SOTA"}
               </span>
             </div>
             <p className="text-xs text-slate-500">
-              Projeções com IA Fundacional, Tese de World Computer & Super Asset
+              {t?.appSubtitle || "Projeções com IA Fundacional, Tese de World Computer & Super Asset"}
             </p>
           </div>
         </div>
 
-        {/* Ticker de Métricas & Ações */}
+        {/* Ticker de Métricas, Idioma & Ações */}
         <div className="flex items-center flex-wrap gap-2.5 text-xs">
           
+          {/* Seletor de Idioma (i18n: PT / EN / ZH) */}
+          <div className="bg-slate-100 border border-slate-200 p-1 rounded-lg flex items-center gap-1">
+            <Globe className="w-3.5 h-3.5 text-slate-500 ml-1 mr-0.5" />
+            <button
+              onClick={() => setLang('pt')}
+              className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer transition ${
+                lang === 'pt' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              PT
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer transition ${
+                lang === 'en' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLang('zh')}
+              className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer transition ${
+                lang === 'zh' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              中文
+            </button>
+          </div>
+
           {/* Cotação ETH */}
           <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-2xs">
-            <span className="text-slate-500 font-medium">ETH:</span>
+            <span className="text-slate-500 font-medium">{t?.spotPrice || "ETH:"}</span>
             <span className="font-bold text-slate-900 font-mono">
               {currentPrice ? `$${currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '...'}
             </span>
@@ -82,13 +121,13 @@ export default function Header({ currentPrice, priceChangePct, tvlUsd, stakedPct
 
           {/* TVL Global */}
           <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-2xs">
-            <span className="text-slate-500 font-medium">TVL DeFi:</span>
-            <span className="font-bold text-blue-700 font-mono">{tvlUsd || '$65.0B'}</span>
+            <span className="text-slate-500 font-medium">{t?.tvlDefi || "TVL DeFi:"}</span>
+            <span className="font-bold text-blue-700 font-mono">{tvlUsd || '$109.0B'}</span>
           </div>
 
           {/* Staking Ratio */}
           <div className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-2xs">
-            <span className="text-slate-500 font-medium">Supply Staked:</span>
+            <span className="text-slate-500 font-medium">{t?.stakedSupply || "Supply Staked:"}</span>
             <span className="font-bold text-indigo-700 font-mono">{stakedPct || '28.9%'}</span>
           </div>
 
@@ -116,17 +155,17 @@ export default function Header({ currentPrice, priceChangePct, tvlUsd, stakedPct
             {refreshDone ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Atualizado!</span>
+                <span>OK!</span>
               </>
             ) : isRefreshing ? (
               <>
                 <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" />
-                <span>Processando IA...</span>
+                <span>{t?.recalculating || "Processando..."}</span>
               </>
             ) : (
               <>
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Recalcular TimesFM</span>
+                <span>{t?.recalculate || "Recalcular TimesFM"}</span>
               </>
             )}
           </button>
