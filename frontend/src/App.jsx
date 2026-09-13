@@ -86,7 +86,21 @@ export default function App() {
     );
   }
 
-  const { market_history, full_history_daily, weekly_history, monthly_history, forecasts, weekly_forecast, fundamentals, tps_roadmap_data, generated_at } = data;
+  const { 
+    market_history, 
+    full_history_daily, 
+    weekly_history, 
+    monthly_history, 
+    forecasts, 
+    weekly_forecast, 
+    fundamentals, 
+    tps_roadmap_data, 
+    generated_at,
+    scenarios,
+    channel_history,
+    channel_history_full,
+    methodology_framework
+  } = data;
   const historySeries = full_history_daily && full_history_daily.length > 0 ? full_history_daily : (market_history || []);
   const currentPrice = historySeries.length > 0 ? historySeries[historySeries.length - 1].close : null;
   const prevPrice = historySeries.length > 1 ? historySeries[historySeries.length - 2].close : null;
@@ -117,6 +131,10 @@ export default function App() {
           weeklyHistory={weekly_history || []}
           monthlyHistory={monthly_history || []}
           forecasts={forecasts || {}}
+          scenarios={scenarios || {}}
+          channelHistory={channel_history || []}
+          channelHistoryFull={channel_history_full || []}
+          methodologyFramework={methodology_framework || {}}
           weeklyForecast={weekly_forecast || []}
           indicatorsForecast={data.indicators_forecast || {}}
         />
@@ -137,7 +155,9 @@ export default function App() {
         />
 
         {/* Seção 3: Metodologia e Fundamentos do TimesFM */}
-        <ModelMethodology />
+        <ModelMethodology 
+          methodologyFramework={methodology_framework}
+        />
 
       </main>
 
