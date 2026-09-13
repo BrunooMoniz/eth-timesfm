@@ -2,6 +2,6 @@
 
 @layer base {
   body {
-    @apply bg-[#0b0e14] text-[#e2e8f0] font-sans antialiased selection:bg-purple-500/30 selection:text-purple-200;
+    @apply bg-[#f8fafc] text-slate-900 font-sans antialiased selection:bg-blue-500/20 selection:text-blue-900;
   }
 }
