@@ -11,23 +11,24 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const loadData = async () => {
+    try {
+      const res = await fetch(`/data/eth_timesfm_data.json?t=${Date.now()}`);
+      if (!res.ok) {
+        throw new Error(`Erro ao carregar dados (${res.status})`);
+      }
+      const json = await res.json();
+      setData(json);
+      setLoading(false);
+    } catch (err) {
+      console.error("Falha ao buscar dataset:", err);
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    fetch('/data/eth_timesfm_data.json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`Erro ao carregar dados (${res.status})`);
-        }
-        return res.json();
-      })
-      .then(json => {
-        setData(json);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Falha ao buscar dataset:", err);
-        setError(err.message);
-        setLoading(false);
-      });
+    loadData();
   }, []);
 
   if (loading) {
@@ -76,6 +77,7 @@ export default function App() {
         tvlUsd={currentTvl}
         stakedPct={stakedPct}
         lastUpdated={generated_at}
+        onRefreshSuccess={loadData}
       />
 
       {/* Main Content Area */}
