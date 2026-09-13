@@ -1,16 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import ForecastChart from './components/ForecastChart';
 import TpsRoadmapChart from './components/TpsRoadmapChart';
 import SuperAssetSection from './components/SuperAssetSection';
 import WorldComputerSection from './components/WorldComputerSection';
 import ModelMethodology from './components/ModelMethodology';
+import InteractiveSimulator from './components/InteractiveSimulator';
 import { Loader2 } from 'lucide-react';
+
+const DEFAULT_ASSUMPTIONS = {
+  burnRateEthDay: 420,
+  stakingRatioPct: 28.9,
+  l2Tps: 125,
+  metcalfeBeta: 2.02,
+  peMultiple: 25.0,
+  discountRatePct: 7.5
+};
 
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
 
   const loadData = React.useCallback(async () => {
     try {
@@ -54,6 +65,50 @@ export default function App() {
       ignore = true;
     };
   }, []);
+
+  const historySeries = data?.full_history_daily && data.full_history_daily.length > 0 
+    ? data.full_history_daily 
+    : (data?.market_history || []);
+  const currentPrice = historySeries.length > 0 ? historySeries[historySeries.length - 1].close : 2484;
+  const prevPrice = historySeries.length > 1 ? historySeries[historySeries.length - 2].close : currentPrice;
+  const priceChangePct = currentPrice && prevPrice ? parseFloat((((currentPrice - prevPrice) / prevPrice) * 100).toFixed(2)) : 0;
+
+  // Cálculo do Modelo de Valuation Sintético Integrado (estilo ETHval)
+  const valuationResults = useMemo(() => {
+    const p = currentPrice || 2484;
+    const supplyEth = 120.4e6;
+    
+    // 1. Capital Asset (Yield do Staking PoS)
+    const stakingYieldPct = 3.4 * Math.sqrt(28.9 / Math.max(10, assumptions.stakingRatioPct));
+    const capitalAssetVal = Math.round((p * (stakingYieldPct / 100)) / (assumptions.discountRatePct / 100));
+
+    // 2. Consumable Asset (Queima EIP-1559 via múltiplo de fluxo de caixa)
+    const annualBurnEth = assumptions.burnRateEthDay * 365;
+    const annualBurnUsd = annualBurnEth * p;
+    const consumableAssetVal = Math.round((annualBurnUsd * (assumptions.peMultiple / 25.0)) / supplyEth * 12);
+
+    // 3. Store of Value & Metcalfe Adoption Premium
+    const metcalfeFactor = Math.pow(assumptions.metcalfeBeta / 2.02, 2.4) * (1 + (assumptions.l2Tps - 125) / 1500);
+    const storeOfValueVal = Math.round(1344 * metcalfeFactor);
+
+    // Simulated Fair Value Total Sintético
+    const simulatedFairValue = Math.round(
+      3444 * 
+      (0.35 + 0.35 * (assumptions.burnRateEthDay / 420) + 0.30 * (assumptions.stakingRatioPct / 28.9)) *
+      metcalfeFactor *
+      Math.pow(assumptions.peMultiple / 25.0, 0.22) *
+      Math.pow(7.5 / assumptions.discountRatePct, 0.28)
+    );
+
+    return {
+      simulatedFairValue: Math.max(1200, simulatedFairValue),
+      capitalAssetVal,
+      consumableAssetVal,
+      storeOfValueVal,
+      stakingYieldPct: stakingYieldPct.toFixed(2),
+      annualBurnEth: Math.round(annualBurnEth)
+    };
+  }, [assumptions, currentPrice]);
 
   if (loading) {
     return (
@@ -101,10 +156,6 @@ export default function App() {
     channel_history_full,
     methodology_framework
   } = data;
-  const historySeries = full_history_daily && full_history_daily.length > 0 ? full_history_daily : (market_history || []);
-  const currentPrice = historySeries.length > 0 ? historySeries[historySeries.length - 1].close : null;
-  const prevPrice = historySeries.length > 1 ? historySeries[historySeries.length - 2].close : null;
-  const priceChangePct = currentPrice && prevPrice ? parseFloat((((currentPrice - prevPrice) / prevPrice) * 100).toFixed(2)) : 0;
 
   const currentTvl = fundamentals?.current_tvl_usd ? `$${(fundamentals.current_tvl_usd / 1e9).toFixed(1)}B` : '$65.0B';
   const stakedPct = fundamentals?.triple_point_metrics?.capital_asset?.staked_pct_supply ? `${fundamentals.triple_point_metrics.capital_asset.staked_pct_supply}%` : '28.9%';
@@ -124,7 +175,7 @@ export default function App() {
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         
-        {/* Mega Gráfico de Previsões com TimesFM 3.0 e Cruzamento Multi-Timeframe */}
+        {/* Mega Gráfico de Previsões com TimesFM 3.0, Toda a Linha Temporal e Reconciliação */}
         <ForecastChart 
           marketHistory={market_history || []}
           fullHistoryDaily={full_history_daily || []}
@@ -137,6 +188,17 @@ export default function App() {
           methodologyFramework={methodology_framework || {}}
           weeklyForecast={weekly_forecast || []}
           indicatorsForecast={data.indicators_forecast || {}}
+          simulatedFairValue={valuationResults.simulatedFairValue}
+        />
+
+        {/* Simulador Interativo de Premissas & Valuation (Estilo ETHval) */}
+        <InteractiveSimulator 
+          assumptions={assumptions}
+          setAssumptions={setAssumptions}
+          defaultAssumptions={DEFAULT_ASSUMPTIONS}
+          currentPrice={currentPrice}
+          valuationResults={valuationResults}
+          onResetAll={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
         />
 
         {/* Gráfico Dedicado de Throughput (TPS) & Roadmap de Escalabilidade */}

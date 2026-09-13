@@ -1,6 +1,38 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { createChart, ColorType, LineSeries, CandlestickSeries, AreaSeries, PriceScaleMode } from 'lightweight-charts';
-import { Layers, Flame, Vault, Cpu, GitMerge, CheckCircle2, Sliders, TrendingUp, ShieldAlert, Sparkles, Compass, Activity, BookOpen } from 'lucide-react';
+import { 
+  Layers, 
+  Flame, 
+  Vault, 
+  Cpu, 
+  GitMerge, 
+  CheckCircle2, 
+  Sliders, 
+  TrendingUp, 
+  ShieldAlert, 
+  Sparkles, 
+  Compass, 
+  Activity, 
+  BookOpen,
+  Calendar,
+  Flag,
+  Landmark,
+  Clock,
+  Eye,
+  ChevronRight
+} from 'lucide-react';
+
+const ETH_MILESTONES = [
+  { id: 'genesis', date: '2015-07-30', label: 'Gênesis', price: 0.31, tag: 'Jul/2015', desc: 'Bloco #0 minerado. Fundação do Ethereum World Computer.' },
+  { id: 'dao', date: '2016-07-20', label: 'The DAO Fork', price: 12.5, tag: 'Jul/2016', desc: 'Hard fork histórico separando Ethereum (ETH) de Ethereum Classic (ETC).' },
+  { id: 'ico_top', date: '2018-01-13', label: 'Topo ICO 2018', price: 1420, tag: 'Jan/2018', desc: 'Primeiro grande topo histórico impulsionado pela febre do padrão ERC-20.' },
+  { id: 'defi_summer', date: '2020-08-15', label: 'DeFi Summer', price: 390, tag: 'Ago/2020', desc: 'Explosão do TVL em Uniswap, Aave, Compound e MakerDAO.' },
+  { id: 'eip1559', date: '2021-08-05', label: 'EIP-1559 London', price: 2800, tag: 'Ago/2021', desc: 'Ativação da queima algorítmica de base fee e início do choque de oferta.' },
+  { id: 'ath2021', date: '2021-11-10', label: 'ATH Histórico', price: 4878, tag: 'Nov/2021', desc: 'Máxima histórica do Ethereum impulsionada pelo boom institucional e NFTs.' },
+  { id: 'merge', date: '2022-09-15', label: 'The Merge (PoS)', price: 1600, tag: 'Set/2022', desc: 'Transição ecológica para Proof-of-Stake e corte de 90% na emissão diária.' },
+  { id: 'dencun', date: '2024-03-13', label: 'Dencun / Blobs', price: 3950, tag: 'Mar/2024', desc: 'EIP-4844 ativação de blob space, reduzindo taxas de L2s em até 95%.' },
+  { id: 'surge_today', date: '2026-09-13', label: 'The Surge (Hoje)', price: 2484, tag: 'Hoje', desc: 'Fase de escala com 125+ TPS agregados e transição para PeerDAS.' }
+];
 
 export default function ForecastChart({
   marketHistory = [],
@@ -12,7 +44,8 @@ export default function ForecastChart({
   channelHistory = [],
   channelHistoryFull = [],
   methodologyFramework = {},
-  indicatorsForecast = {}
+  indicatorsForecast = {},
+  simulatedFairValue = null
 }) {
   const chartContainerRef = useRef(null);
   const chartInstance = useRef(null);
@@ -21,25 +54,44 @@ export default function ForecastChart({
   const [selectedHorizon, setSelectedHorizon] = useState('30d'); // '7d' | '30d' | '90d' | '180d' | '365d'
   const [selectedScenario, setSelectedScenario] = useState('base'); // 'base' | 'bull' | 'bear'
   const [showSecularChannel, setShowSecularChannel] = useState(true); // Exibir Canal Power-Law & Pisos On-Chain
-  const [selectedTimeframe, setSelectedTimeframe] = useState('1d'); // '1d' | '1w' | '1m' | 'all'
+  const [selectedRange, setSelectedRange] = useState('1y'); // '30d' | '90d' | '180d' | '1y' | '3y' | '5y' | 'all'
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1d'); // '1d' | '1w' | '1m'
   const [chartType, setChartType] = useState('candles'); // 'candles' | 'line'
   const [scaleMode, setScaleMode] = useState('normal'); // 'normal' | 'log'
   const [bandMode, setBandMode] = useState('fan'); // 'p10_p90' | 'p20_p80' | 'p30_p70' | 'fan' | 'none'
+  const [activeMilestone, setActiveMilestone] = useState(null);
+  const [showMilestones, setShowMilestones] = useState(true);
 
-  // Seleciona o conjunto de dados histórico baseado no timeframe escolhido
+  // Seleciona o conjunto de dados histórico baseado no range e timeframe escolhidos
   const activeHistoricalData = useMemo(() => {
-    if (selectedTimeframe === 'all' && fullHistoryDaily.length > 0) {
-      return fullHistoryDaily;
-    }
+    let source = fullHistoryDaily.length > 0 ? fullHistoryDaily : marketHistory;
     if (selectedTimeframe === '1w' && weeklyHistory.length > 0) {
-      return weeklyHistory;
+      source = weeklyHistory;
+    } else if (selectedTimeframe === '1m' && monthlyHistory.length > 0) {
+      source = monthlyHistory;
     }
-    if (selectedTimeframe === '1m' && monthlyHistory.length > 0) {
-      return monthlyHistory;
-    }
-    // Default 1d (últimos 365 dias ou o que vier em marketHistory)
-    return marketHistory.length > 0 ? marketHistory : fullHistoryDaily;
-  }, [selectedTimeframe, marketHistory, fullHistoryDaily, weeklyHistory, monthlyHistory]);
+
+    if (selectedRange === '30d') return source.slice(-30);
+    if (selectedRange === '90d') return source.slice(-90);
+    if (selectedRange === '180d') return source.slice(-180);
+    if (selectedRange === '1y') return source.slice(-365);
+    if (selectedRange === '3y') return source.slice(-Math.min(source.length, 3 * 365));
+    if (selectedRange === '5y') return source.slice(-Math.min(source.length, 5 * 365));
+    // 'all': histórico total desde o Gênesis 2015
+    return source;
+  }, [selectedRange, selectedTimeframe, fullHistoryDaily, marketHistory, weeklyHistory, monthlyHistory]);
+
+  // Canal secular correspondente à janela selecionada
+  const activeChannel = useMemo(() => {
+    const full = channelHistoryFull.length > 0 ? channelHistoryFull : channelHistory;
+    if (selectedRange === '30d') return full.slice(-30);
+    if (selectedRange === '90d') return full.slice(-90);
+    if (selectedRange === '180d') return full.slice(-180);
+    if (selectedRange === '1y') return full.slice(-365);
+    if (selectedRange === '3y') return full.slice(-Math.min(full.length, 3 * 365));
+    if (selectedRange === '5y') return full.slice(-Math.min(full.length, 5 * 365));
+    return full;
+  }, [selectedRange, channelHistory, channelHistoryFull]);
 
   // Obtém as projeções ativas de acordo com o cenário selecionado
   const activeForecasts = useMemo(() => {
@@ -133,39 +185,50 @@ export default function ForecastChart({
     }
 
     // 1.5 Plotar Canal Secular de Regressão Logarítmica (Power-Law 2015-2026) e Pisos On-Chain
-    if (showSecularChannel) {
-      const activeChannel = selectedTimeframe === 'all' && channelHistoryFull && channelHistoryFull.length > 0
-        ? channelHistoryFull
-        : (channelHistory && channelHistory.length > 0 ? channelHistory : []);
+    if (showSecularChannel && activeChannel && activeChannel.length > 0) {
+      // Fair Value Secular (Metcalfe) em linha tracejada violeta (#8b5cf6)
+      const fairValueSeries = chart.addSeries(LineSeries, {
+        color: '#8b5cf6',
+        lineWidth: 2,
+        lineStyle: 2,
+        title: 'Fair Value',
+      });
+      fairValueSeries.setData(activeChannel.map(p => ({ time: p.time, value: p.fair_value })));
 
-      if (activeChannel.length > 0) {
-        // Fair Value Secular (Metcalfe) em linha tracejada violeta (#8b5cf6)
-        const fairValueSeries = chart.addSeries(LineSeries, {
-          color: '#8b5cf6',
-          lineWidth: 2,
-          lineStyle: 2,
-          title: 'Fair Value',
-        });
-        fairValueSeries.setData(activeChannel.map(p => ({ time: p.time, value: p.fair_value })));
+      // Topo Teórico de Ciclo em linha âmbar pontilhada (#f59e0b)
+      const cycleTopSeries = chart.addSeries(LineSeries, {
+        color: '#f59e0b',
+        lineWidth: 1.5,
+        lineStyle: 3,
+        title: 'Topo de Ciclo',
+      });
+      cycleTopSeries.setData(activeChannel.map(p => ({ time: p.time, value: p.cycle_top })));
 
-        // Topo Teórico de Ciclo em linha âmbar pontilhada (#f59e0b)
-        const cycleTopSeries = chart.addSeries(LineSeries, {
-          color: '#f59e0b',
-          lineWidth: 1.5,
-          lineStyle: 3,
-          title: 'Topo de Ciclo',
-        });
-        cycleTopSeries.setData(activeChannel.map(p => ({ time: p.time, value: p.cycle_top })));
+      // Piso de Ciclo Secular em linha slate pontilhada (#64748b)
+      const cycleFloorSeries = chart.addSeries(LineSeries, {
+        color: '#64748b',
+        lineWidth: 1.5,
+        lineStyle: 3,
+        title: 'Piso de Ciclo',
+      });
+      cycleFloorSeries.setData(activeChannel.map(p => ({ time: p.time, value: p.cycle_floor })));
+    }
 
-        // Piso de Ciclo Secular em linha slate pontilhada (#64748b)
-        const cycleFloorSeries = chart.addSeries(LineSeries, {
-          color: '#64748b',
-          lineWidth: 1.5,
-          lineStyle: 3,
-          title: 'Piso de Ciclo',
-        });
-        cycleFloorSeries.setData(activeChannel.map(p => ({ time: p.time, value: p.cycle_floor })));
-      }
+    // 1.8 Plotar Linha de Fair Value Simulado Interativo (ETHval Premissas)
+    if (simulatedFairValue && simulatedFairValue > 0) {
+      const simFairSeries = chart.addSeries(LineSeries, {
+        color: '#7c3aed',
+        lineWidth: 2.5,
+        lineStyle: 1, // Dotted
+        title: 'Fair Value Simulado (Premissas)',
+      });
+      const sliceCount = Math.min(60, activeHistoricalData.length);
+      const recentHist = activeHistoricalData.slice(-sliceCount);
+      const simData = [
+        ...recentHist.map(p => ({ time: p.time, value: simulatedFairValue })),
+        ...(currentForecast?.points || []).map(p => ({ time: p.time, value: simulatedFairValue }))
+      ];
+      simFairSeries.setData(simData);
     }
 
     // 2. Plotar projeções do TimesFM 3.0
@@ -353,7 +416,7 @@ export default function ForecastChart({
         chartInstance.current = null;
       }
     };
-  }, [activeHistoricalData, currentForecast, chartType, scaleMode, bandMode, showSecularChannel, channelHistory, channelHistoryFull]);
+  }, [activeHistoricalData, currentForecast, chartType, scaleMode, bandMode, showSecularChannel, activeChannel, simulatedFairValue]);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
@@ -433,15 +496,15 @@ export default function ForecastChart({
             </span>
           </div>
 
-          {/* Seletor de Horizonte de Projeção Estendido: [7D] [30D] [90D] [180D (6M)] [365D (1 Ano)] */}
+          {/* Seletor de Horizonte de Projeção Estendido */}
           <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center gap-1">
-            <span className="text-[10px] uppercase font-bold text-slate-600 px-2">Horizonte:</span>
+            <span className="text-[10px] uppercase font-bold text-slate-600 px-2">Projeção:</span>
             {[
-              { id: '7d', label: '7 Dias' },
-              { id: '30d', label: '30 Dias' },
-              { id: '90d', label: '90 Dias' },
-              { id: '180d', label: '180 Dias (6M)' },
-              { id: '365d', label: '365 Dias (1 Ano)' }
+              { id: '7d', label: '7D' },
+              { id: '30d', label: '30D' },
+              { id: '90d', label: '90D' },
+              { id: '180d', label: '180D (6M)' },
+              { id: '365d', label: '365D (1A)' }
             ].map(h => (
               <button
                 key={h.id}
@@ -458,32 +521,9 @@ export default function ForecastChart({
           </div>
         </div>
 
-        {/* Timeframe de Visualização & Modos do Gráfico */}
-        <div className="flex flex-wrap items-center gap-2.5 text-xs">
+        {/* Modos do Gráfico (Tipo & Escala) */}
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           
-          {/* Seletor de Timeframe de Visualização */}
-          <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center gap-1">
-            <span className="text-[10px] uppercase font-bold text-slate-600 px-1.5">Zoom:</span>
-            {[
-              { id: '1d', label: '1D Diário' },
-              { id: '1w', label: '1W Semanal' },
-              { id: '1m', label: '1M Mensal' },
-              { id: 'all', label: 'Histórico Total (2015-2026)' },
-            ].map(tf => (
-              <button
-                key={tf.id}
-                onClick={() => setSelectedTimeframe(tf.id)}
-                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer ${
-                  selectedTimeframe === tf.id
-                    ? 'bg-white text-blue-700 shadow-2xs border border-slate-200/80 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-                }`}
-              >
-                {tf.label}
-              </button>
-            ))}
-          </div>
-
           {/* Tipo de Gráfico (Candles / Linha) */}
           <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center">
             <button
@@ -504,7 +544,7 @@ export default function ForecastChart({
             </button>
           </div>
 
-          {/* Alternador de Escala de Preço: [Linear] / [Log (Logarítmica)] */}
+          {/* Alternador de Escala de Preço: [Linear] / [Log] */}
           <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-1 flex items-center">
             <button
               onClick={() => setScaleMode('normal')}
@@ -520,7 +560,7 @@ export default function ForecastChart({
               className={`px-2.5 py-1 rounded-md font-medium transition cursor-pointer ${
                 scaleMode === 'log' ? 'bg-white text-blue-700 shadow-2xs font-bold' : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="Escala Logarítmica para ciclos de longo prazo"
+              title="Escala Logarítmica para ciclos seculares de longo prazo"
             >
               Log
             </button>
@@ -528,6 +568,144 @@ export default function ForecastChart({
 
         </div>
 
+      </div>
+
+      {/* Régua de Navegação Temporal Completa (Estilo ETHval) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-3 pb-2 text-xs border-b border-slate-100">
+        
+        {/* Alcance Histórico (Range) */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[10px] uppercase font-bold text-slate-600 flex items-center gap-1 mr-1">
+            <Clock className="w-3.5 h-3.5 text-blue-600" />
+            Janela Temporal:
+          </span>
+          {[
+            { id: '30d', label: '30D' },
+            { id: '90d', label: '90D' },
+            { id: '180d', label: '180D' },
+            { id: '1y', label: '1 Ano' },
+            { id: '3y', label: '3 Anos' },
+            { id: '5y', label: '5 Anos' },
+            { id: 'all', label: 'Histórico Total (2015–2026)', highlight: true }
+          ].map(r => (
+            <button
+              key={r.id}
+              onClick={() => {
+                setSelectedRange(r.id);
+                // Se for all ou 5y, muda automaticamente para log scale para melhor visualização
+                if (r.id === 'all' || r.id === '5y') {
+                  setScaleMode('log');
+                }
+              }}
+              className={`px-2.5 py-1 rounded-lg font-semibold transition cursor-pointer text-xs ${
+                selectedRange === r.id
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : r.highlight 
+                    ? 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100 font-bold'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Frequência do Candle */}
+        <div className="flex items-center gap-1 bg-slate-100/90 border border-slate-200 rounded-lg p-0.5">
+          <span className="text-[10px] uppercase font-bold text-slate-600 px-1.5">Frequência:</span>
+          {[
+            { id: '1d', label: '1D Diário' },
+            { id: '1w', label: '1W Semanal' },
+            { id: '1m', label: '1M Mensal' }
+          ].map(f => (
+            <button
+              key={f.id}
+              onClick={() => setSelectedTimeframe(f.id)}
+              className={`px-2 py-0.5 rounded text-[11px] font-semibold transition cursor-pointer ${
+                selectedTimeframe === f.id
+                  ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+      </div>
+
+      {/* Régua de Marcos Históricos da Rede Ethereum (Milestones) */}
+      <div className="py-2.5 border-b border-slate-100">
+        <div className="flex items-center justify-between mb-1.5 text-xs">
+          <span className="font-semibold text-slate-600 flex items-center gap-1.5 text-[11px]">
+            <Landmark className="w-3.5 h-3.5 text-blue-600" />
+            Marcos Históricos da Ethereum (Clique para Explorar):
+          </span>
+          <button
+            onClick={() => setShowMilestones(!showMilestones)}
+            className="text-[10px] font-semibold text-blue-600 hover:underline cursor-pointer"
+          >
+            {showMilestones ? 'Ocultar Marcos' : 'Exibir Marcos'}
+          </button>
+        </div>
+
+        {showMilestones && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs scrollbar-none">
+            {ETH_MILESTONES.map(m => {
+              const isSelected = activeMilestone?.id === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => {
+                    setActiveMilestone(isSelected ? null : m);
+                    setSelectedRange('all');
+                    setScaleMode('log');
+                  }}
+                  className={`px-2.5 py-1 rounded-lg border whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 text-[11px] ${
+                    isSelected 
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs font-bold' 
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-blue-500'}`}></span>
+                  <span>{m.label}</span>
+                  <span className={`text-[10px] font-mono ${isSelected ? 'text-blue-100' : 'text-slate-600'}`}>
+                    (${m.price < 1 ? m.price.toFixed(2) : m.price.toLocaleString('en-US')})
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Drawer Informativo do Marco Selecionado */}
+        {activeMilestone && (
+          <div className="mt-2 p-3 bg-blue-50/80 rounded-xl border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-start gap-2">
+              <Flag className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-slate-900 flex items-center gap-2">
+                  {activeMilestone.label} • {activeMilestone.tag}
+                  <span className="font-mono text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200">
+                    Preço da Época: ${activeMilestone.price < 1 ? activeMilestone.price.toFixed(2) : activeMilestone.price.toLocaleString('en-US')}
+                  </span>
+                </p>
+                <p className="text-slate-600 mt-0.5">{activeMilestone.desc}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200 font-mono">
+                +{Math.round(((2484 - activeMilestone.price) / activeMilestone.price) * 100).toLocaleString()}% até hoje
+              </span>
+              <button 
+                onClick={() => setActiveMilestone(null)}
+                className="text-slate-600 hover:text-slate-900 font-bold px-1.5 py-0.5 rounded cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Barra Secundária de Controles de Incerteza (Fan Chart / Bandas de Quantis) & Canal Secular */}
@@ -653,6 +831,12 @@ export default function ForecastChart({
                 <span className="text-amber-700 font-medium">Topo ($14.254)</span>
               </div>
             </>
+          )}
+          {simulatedFairValue && (
+            <div className="flex items-center gap-1.5">
+              <span className="w-3 h-0.5 border-b-2 border-dotted border-purple-600"></span>
+              <span className="text-purple-700 font-bold">Simulado: ${Math.round(simulatedFairValue).toLocaleString()}</span>
+            </div>
           )}
           {scaleMode === 'log' && (
             <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
