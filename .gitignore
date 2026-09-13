@@ -14,3 +14,6 @@ dist/
 .DS_Store
 *.log
 .services.pid
+.wrangler/
+frontend/dist/
+

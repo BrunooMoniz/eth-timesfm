@@ -10,6 +10,13 @@ export const translations = {
     recalculate: "Recalcular TimesFM",
     recalculating: "Processando...",
 
+    // Navigation Tabs
+    navForecast: "Terminal de Previsão",
+    navValuation: "Simulador de Valuation",
+    navScaling: "Escalabilidade & L2s",
+    navThesis: "Tese Econômica",
+    navMethodology: "Metodologia IA",
+
     // Knowledge Pills
     knowledgePillsTitle: "Pílulas de Conhecimento • Modelo Mental Ethereum",
     knowledgePillsSubtitle: "Conceitos estruturais essenciais explicados de forma direta e sem jargões desnecessários",
@@ -144,6 +151,13 @@ export const translations = {
     recalculate: "Recalculate TimesFM",
     recalculating: "Processing...",
 
+    // Navigation Tabs
+    navForecast: "Forecast Terminal",
+    navValuation: "Valuation Simulator",
+    navScaling: "Scalability & L2s",
+    navThesis: "Economic Thesis",
+    navMethodology: "AI Methodology",
+
     // Knowledge Pills
     knowledgePillsTitle: "Knowledge Pills • Ethereum Mental Model",
     knowledgePillsSubtitle: "Essential structural concepts explained concisely without unnecessary buzzwords",
@@ -277,6 +291,13 @@ export const translations = {
     stakedSupply: "质押率比例:",
     recalculate: "重新推演 TimesFM",
     recalculating: "计算中...",
+
+    // Navigation Tabs
+    navForecast: "预测终端",
+    navValuation: "估值模拟器",
+    navScaling: "扩容与L2网络",
+    navThesis: "经济学假说",
+    navMethodology: "AI 方法论",
 
     // Knowledge Pills
     knowledgePillsTitle: "知识胶囊 • 以太坊底层思维模型",

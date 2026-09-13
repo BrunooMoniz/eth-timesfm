@@ -20,14 +20,50 @@ const DEFAULT_ASSUMPTIONS = {
   discountRatePct: 7.5
 };
 
+function getPageFromPath(path) {
+  if (path.includes('/valuation')) return 'valuation';
+  if (path.includes('/escalabilidade')) return 'escalabilidade';
+  if (path.includes('/tese')) return 'tese';
+  if (path.includes('/metodologia')) return 'metodologia';
+  return 'previsao';
+}
+
+function getPathFromPage(page) {
+  switch (page) {
+    case 'valuation': return '/valuation';
+    case 'escalabilidade': return '/escalabilidade';
+    case 'tese': return '/tese';
+    case 'metodologia': return '/metodologia';
+    default: return '/';
+  }
+}
+
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lang, setLang] = useState('pt');
+  const [activePage, setActivePage] = useState(() => getPageFromPath(window.location.pathname));
   const [assumptions, setAssumptions] = useState(DEFAULT_ASSUMPTIONS);
 
   const t = translations[lang] || translations.pt;
+
+  const navigateTo = (page) => {
+    setActivePage(page);
+    const newPath = getPathFromPage(page);
+    if (window.location.pathname !== newPath) {
+      window.history.pushState({ page }, '', newPath);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setActivePage(getPageFromPath(window.location.pathname));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const loadData = React.useCallback(async () => {
     try {
@@ -121,9 +157,9 @@ export default function App() {
       <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center gap-4 p-4">
         <div className="bg-white border border-slate-200 p-8 rounded-2xl shadow-xs text-center max-w-md flex flex-col items-center">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-3" />
-          <h2 className="font-bold text-lg text-slate-900">Carregando Modelo Google TimesFM & Dados Ethereum...</h2>
+          <h2 className="font-bold text-lg text-slate-900">Carregando Plataforma Ethereum TimesFM...</h2>
           <p className="text-xs text-slate-500 mt-1.5">
-            Sincronizando séries temporais multi-timeframe (2015–2026), quantis de incerteza e reconciliação hierárquica
+            Sincronizando séries temporais multi-timeframe (2015–2026), quantis e fundamentação on-chain
           </p>
         </div>
       </div>
@@ -167,85 +203,113 @@ export default function App() {
   const stakedPct = fundamentals?.triple_point_metrics?.capital_asset?.staked_pct_supply ? `${fundamentals.triple_point_metrics.capital_asset.staked_pct_supply}%` : '28.9%';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
-      {/* Top Navbar com Seletor de Idiomas */}
-      <Header 
-        currentPrice={currentPrice}
-        priceChangePct={priceChangePct}
-        tvlUsd={currentTvl}
-        stakedPct={stakedPct}
-        lastUpdated={generated_at}
-        onRefreshSuccess={loadData}
-        lang={lang}
-        setLang={setLang}
-        t={t}
-      />
-
-      {/* Main Content Area */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        
-        {/* Pílulas de Conhecimento: Modelo Mental Sem Slop */}
-        <KnowledgePills t={t} />
-
-        {/* Diagramas Visuais do Modelo Mental (Flywheel & Pipeline TimesFM) */}
-        <MentalModelDiagrams t={t} />
-
-        {/* Mega Gráfico de Previsões com TimesFM 3.0, Toda a Linha Temporal e Reconciliação */}
-        <ForecastChart 
-          marketHistory={market_history || []}
-          fullHistoryDaily={full_history_daily || []}
-          weeklyHistory={weekly_history || []}
-          monthlyHistory={monthly_history || []}
-          forecasts={forecasts || {}}
-          scenarios={scenarios || {}}
-          channelHistory={channel_history || []}
-          channelHistoryFull={channel_history_full || []}
-          methodologyFramework={methodology_framework || {}}
-          weeklyForecast={weekly_forecast || []}
-          indicatorsForecast={data.indicators_forecast || {}}
-          simulatedFairValue={valuationResults.simulatedFairValue}
-        />
-
-        {/* Simulador Interativo de Premissas & Valuation (Estilo ETHval) */}
-        <InteractiveSimulator 
-          assumptions={assumptions}
-          setAssumptions={setAssumptions}
-          defaultAssumptions={DEFAULT_ASSUMPTIONS}
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col justify-between">
+      <div>
+        {/* Top Navbar com Abas de Navegação Multi-Páginas */}
+        <Header 
           currentPrice={currentPrice}
-          valuationResults={valuationResults}
-          onResetAll={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
+          priceChangePct={priceChangePct}
+          tvlUsd={currentTvl}
+          stakedPct={stakedPct}
+          lastUpdated={generated_at}
+          onRefreshSuccess={loadData}
+          lang={lang}
+          setLang={setLang}
+          t={t}
+          activePage={activePage}
+          onNavigate={navigateTo}
         />
 
-        {/* Gráfico Dedicado de Throughput (TPS) & Roadmap de Escalabilidade */}
-        <TpsRoadmapChart 
-          tpsRoadmapData={tps_roadmap_data}
-        />
+        {/* Conteúdo da Página Selecionada (Sem Slop de Tudo de uma Vez) */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          
+          {/* PÁGINA 1: Terminal de Previsão (Foco Puro no Gráfico & Projeções) */}
+          {activePage === 'previsao' && (
+            <div className="space-y-6">
+              <ForecastChart 
+                marketHistory={market_history || []}
+                fullHistoryDaily={full_history_daily || []}
+                weeklyHistory={weekly_history || []}
+                monthlyHistory={monthly_history || []}
+                forecasts={forecasts || {}}
+                scenarios={scenarios || {}}
+                channelHistory={channel_history || []}
+                channelHistoryFull={channel_history_full || []}
+                methodologyFramework={methodology_framework || {}}
+                weeklyForecast={weekly_forecast || []}
+                indicatorsForecast={data.indicators_forecast || {}}
+                simulatedFairValue={valuationResults.simulatedFairValue}
+              />
+            </div>
+          )}
 
-        {/* Seção 1: O Ethereum como Super Asset (Triple Point Asset) */}
-        <SuperAssetSection 
-          triplePointMetrics={fundamentals?.triple_point_metrics}
-        />
+          {/* PÁGINA 2: Simulador de Valuation Dedicado (Estilo ETHval) */}
+          {activePage === 'valuation' && (
+            <div className="space-y-6">
+              <InteractiveSimulator 
+                assumptions={assumptions}
+                setAssumptions={setAssumptions}
+                defaultAssumptions={DEFAULT_ASSUMPTIONS}
+                currentPrice={currentPrice}
+                valuationResults={valuationResults}
+                onResetAll={() => setAssumptions(DEFAULT_ASSUMPTIONS)}
+              />
+            </div>
+          )}
 
-        {/* Seção 2: O Ethereum como World Computer */}
-        <WorldComputerSection 
-          worldComputerMetrics={fundamentals?.world_computer_metrics}
-        />
+          {/* PÁGINA 3: Escalabilidade & L2s Roadmap (The Surge & PeerDAS) */}
+          {activePage === 'escalabilidade' && (
+            <div className="space-y-6">
+              <TpsRoadmapChart 
+                tpsRoadmapData={tps_roadmap_data}
+              />
+            </div>
+          )}
 
-        {/* Seção 3: Metodologia e Fundamentos do TimesFM */}
-        <ModelMethodology 
-          methodologyFramework={methodology_framework}
-        />
+          {/* PÁGINA 4: Tese Econômica & Modelos Mentais */}
+          {activePage === 'tese' && (
+            <div className="space-y-6">
+              {/* Diagramas Visuais do Modelo Mental */}
+              <MentalModelDiagrams t={t} />
 
-      </main>
+              {/* Pílulas de Conhecimento Práticas */}
+              <KnowledgePills t={t} />
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500">
+              {/* O Ethereum como Super Asset */}
+              <SuperAssetSection 
+                triplePointMetrics={fundamentals?.triple_point_metrics}
+              />
+
+              {/* O Ethereum como World Computer */}
+              <WorldComputerSection 
+                worldComputerMetrics={fundamentals?.world_computer_metrics}
+              />
+            </div>
+          )}
+
+          {/* PÁGINA 5: Metodologia e Fundamentos do TimesFM */}
+          {activePage === 'metodologia' && (
+            <div className="space-y-6">
+              <ModelMethodology 
+                methodologyFramework={methodology_framework}
+              />
+            </div>
+          )}
+
+        </main>
+      </div>
+
+      {/* Footer Limpo e Profissional */}
+      <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 mt-12">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p>© 2026 Ethereum TimesFM • Plataforma Analítica & Projeções com IA Fundacional</p>
-          <p className="flex items-center gap-1.5 font-medium">
-            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-            {generated_at ? `Dados atualizados em: ${generated_at}` : 'Dataset sincronizado em tempo real'}
-          </p>
+          <p>© 2026 Ethereum TimesFM • Arquitetura Modular & IA Fundacional</p>
+          <div className="flex items-center gap-4 text-slate-400">
+            <button onClick={() => navigateTo('previsao')} className="hover:text-blue-600 transition">Previsão</button>
+            <button onClick={() => navigateTo('valuation')} className="hover:text-blue-600 transition">Valuation</button>
+            <button onClick={() => navigateTo('escalabilidade')} className="hover:text-blue-600 transition">Escalabilidade</button>
+            <button onClick={() => navigateTo('tese')} className="hover:text-blue-600 transition">Tese</button>
+            <button onClick={() => navigateTo('metodologia')} className="hover:text-blue-600 transition">Metodologia</button>
+          </div>
         </div>
       </footer>
     </div>
