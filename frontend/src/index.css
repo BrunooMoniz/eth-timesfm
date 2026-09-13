@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-[#0b0e14] text-[#e2e8f0] font-sans antialiased selection:bg-purple-500/30 selection:text-purple-200;
+  }
+}
